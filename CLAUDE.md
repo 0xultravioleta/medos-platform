@@ -185,9 +185,14 @@ Task IDs: `S{sprint}-T{numero}` (ej: `S0-T18` = Sprint 0, Task 18)
 ### Tasks completadas en este repo:
 - [x] S0-T03: GitHub repo creado con .gitignore
 - [x] S0-T05: .env.example con todas las variables
-- [x] S0-T18: FastAPI project scaffold (parcial -- in-memory, sin DB real aun)
+- [x] S0-T18: FastAPI project scaffold (in-memory store, sin DB real aun)
+- [x] S0-T19: Dockerfile + docker-compose (API + PostgreSQL 17 + Redis)
 
-### Proximas tasks:
-- [ ] S0-T19: Dockerfile + docker-compose (DONE)
+### En progreso:
 - [ ] S0-T20: Alembic migrations + schema-per-tenant
 - [ ] S0-T21: GitHub Actions CI pipeline
+
+### Proximas tasks:
+- [ ] S0-T24: SMART on FHIR OAuth2 flow
+- [ ] S0-T25: JWT validation middleware + tenant routing
+- [ ] S0-T30: User + Tenant SQLAlchemy models
