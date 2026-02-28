@@ -26,6 +26,7 @@ class Settings(BaseSettings):
     auth_client_id: str = ""
     auth_audience: str = "https://api.medos.health"
     jwks_url: str = ""
+    dev_jwt_secret: str = "medos-dev-secret-do-not-use-in-production"  # noqa: S105
 
     # AI
     anthropic_api_key: str = ""
