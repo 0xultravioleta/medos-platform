@@ -21,12 +21,12 @@ import {
 
 const NAV_ITEMS = [
   { label: "Dashboard", href: "/dashboard", icon: Home },
-  { label: "Patients", href: "/dashboard/patients", icon: Users },
-  { label: "Appointments", href: "/dashboard/appointments", icon: Calendar },
-  { label: "AI Notes", href: "/dashboard/ai-notes", icon: FileText },
-  { label: "Claims", href: "/dashboard/claims", icon: DollarSign },
-  { label: "Analytics", href: "/dashboard/analytics", icon: BarChart3 },
-  { label: "Settings", href: "/dashboard/settings", icon: Settings },
+  { label: "Patients", href: "/patients", icon: Users },
+  { label: "Appointments", href: "/appointments", icon: Calendar },
+  { label: "AI Notes", href: "/ai-notes", icon: FileText },
+  { label: "Claims", href: "/claims", icon: DollarSign },
+  { label: "Analytics", href: "/analytics", icon: BarChart3 },
+  { label: "Settings", href: "/settings", icon: Settings },
 ];
 
 export function Sidebar() {
