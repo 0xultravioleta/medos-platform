@@ -4,7 +4,7 @@ Implements: POST /Patient, GET /Patient/{id}, GET /Patient?name=...
 Per ADR-001: FHIR resources stored as native JSONB in PostgreSQL.
 """
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from uuid import uuid4
 
 from fastapi import APIRouter, HTTPException, Query
@@ -23,7 +23,7 @@ async def create_patient(patient: dict):
     patient["resourceType"] = "Patient"
     patient["meta"] = {
         "versionId": "1",
-        "lastUpdated": datetime.now(timezone.utc).isoformat(),
+        "lastUpdated": datetime.now(UTC).isoformat(),
     }
     _patients[resource_id] = patient
     return patient

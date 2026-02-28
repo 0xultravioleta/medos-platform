@@ -6,7 +6,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from medos.config import settings
-from medos.routers import health, fhir_patient
+from medos.routers import fhir_patient, health
 
 
 @asynccontextmanager
