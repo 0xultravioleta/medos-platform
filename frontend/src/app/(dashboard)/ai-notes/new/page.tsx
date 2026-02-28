@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import Link from "next/link";
 import {
   ArrowLeft,
@@ -41,6 +41,134 @@ interface CodeSuggestion {
   description: string;
   confidence: number;
   type: "ICD-10" | "CPT";
+}
+
+type EntityType = "MEDICATION" | "LAB VALUE" | "VITALS" | "DIAGNOSIS";
+
+interface MedicalEntity {
+  term: string;
+  type: EntityType;
+}
+
+interface TranscriptLine {
+  speaker: "DR" | "PT";
+  text: string;
+  entities: MedicalEntity[];
+}
+
+/* ============================================
+   Transcript Data & Helpers
+   ============================================ */
+
+const TRANSCRIPT_LINES: TranscriptLine[] = [
+  {
+    speaker: "DR",
+    text: "Good morning, Mr. Chen. How have you been since our last visit?",
+    entities: [],
+  },
+  {
+    speaker: "PT",
+    text: "The new medication has been helping. My blood sugars have been more stable.",
+    entities: [
+      { term: "blood sugars", type: "LAB VALUE" },
+    ],
+  },
+  {
+    speaker: "DR",
+    text: "That's great to hear. Let me check your latest labs... HbA1c is down to 7.2 from 7.8. That's excellent progress.",
+    entities: [
+      { term: "labs", type: "LAB VALUE" },
+      { term: "HbA1c", type: "LAB VALUE" },
+    ],
+  },
+  {
+    speaker: "PT",
+    text: "I've also been walking 30 minutes every day like you suggested.",
+    entities: [],
+  },
+  {
+    speaker: "DR",
+    text: "Wonderful. I want to continue the current dose of Metformin 1000mg twice daily.",
+    entities: [
+      { term: "Metformin", type: "MEDICATION" },
+      { term: "1000mg", type: "MEDICATION" },
+    ],
+  },
+  {
+    speaker: "DR",
+    text: "Let's also schedule a follow-up in 3 months with another A1c check.",
+    entities: [
+      { term: "A1c", type: "LAB VALUE" },
+    ],
+  },
+];
+
+const MEDICAL_TERMS_PATTERN = /\b(HbA1c|A1c|Metformin|blood sugars?|labs?|mg|1000mg|BP|mmHg|SpO2|HR|bpm)\b/gi;
+
+const ENTITY_COLORS: Record<EntityType, string> = {
+  "MEDICATION": "bg-emerald-100 text-emerald-700 border-emerald-300",
+  "LAB VALUE": "bg-blue-100 text-blue-700 border-blue-300",
+  "VITALS": "bg-orange-100 text-orange-700 border-orange-300",
+  "DIAGNOSIS": "bg-purple-100 text-purple-700 border-purple-300",
+};
+
+/**
+ * Build an entity lookup from term -> EntityType for a given line.
+ */
+function buildEntityMap(entities: MedicalEntity[]): Map<string, EntityType> {
+  const map = new Map<string, EntityType>();
+  for (const e of entities) {
+    map.set(e.term.toLowerCase(), e.type);
+  }
+  return map;
+}
+
+/**
+ * Renders transcript text with highlighted medical terms and inline entity badges.
+ */
+function renderTranscriptText(text: string, entities: MedicalEntity[]): React.ReactNode {
+  const entityMap = buildEntityMap(entities);
+  const parts: React.ReactNode[] = [];
+  let lastIndex = 0;
+  let key = 0;
+
+  // Use the global medical terms pattern to find all highlights
+  const regex = new RegExp(MEDICAL_TERMS_PATTERN.source, "gi");
+  let match: RegExpExecArray | null;
+
+  while ((match = regex.exec(text)) !== null) {
+    // Add text before match
+    if (match.index > lastIndex) {
+      parts.push(<span key={key++}>{text.slice(lastIndex, match.index)}</span>);
+    }
+
+    const matchedText = match[0];
+    const entityType = entityMap.get(matchedText.toLowerCase());
+
+    parts.push(
+      <span key={key++} className="relative inline-flex items-center gap-1">
+        <span className="px-1 py-0.5 rounded bg-blue-50 text-blue-900 font-medium">
+          {matchedText}
+        </span>
+        {entityType && (
+          <span
+            className={`inline-flex items-center px-1.5 py-0 rounded-full text-[9px] font-bold border leading-tight ${ENTITY_COLORS[entityType]}`}
+          >
+            {entityType}
+          </span>
+        )}
+      </span>
+    );
+
+    lastIndex = match.index + matchedText.length;
+  }
+
+  // Add remaining text
+  if (lastIndex < text.length) {
+    parts.push(<span key={key++}>{text.slice(lastIndex)}</span>);
+  }
+
+  return parts;
 }
 
 /* ============================================
@@ -164,6 +292,14 @@ export default function AIScribeNewPage() {
   const [typedText, setTypedText] = useState<Record<string, string>>({});
   const typingRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  // Transcript state
+  const [transcriptVisibleLines, setTranscriptVisibleLines] = useState<number>(0);
+  const [transcriptCharIndex, setTranscriptCharIndex] = useState<number>(0);
+  const [transcriptConfidence, setTranscriptConfidence] = useState<number>(98.2);
+  const transcriptScrollRef = useRef<HTMLDivElement | null>(null);
+  const transcriptIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const confidenceIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
   const selectedPatient = MOCK_PATIENTS.find((p) => p.id === selectedPatientId) || null;
 
   /* ---- Recording timer ---- */
@@ -179,6 +315,122 @@ export default function AIScribeNewPage() {
     };
   }, [isRecording, isPaused]);
 
+  /* ---- Live transcript simulation ---- */
+
+  /**
+   * We use a single "global cursor" approach:
+   * - Compute the total number of characters across all lines
+   *   (with a gap of PAUSE_CHARS between lines to simulate thinking pauses)
+   * - A single setInterval advances a counter; we derive lineIdx + charIdx from it
+   */
+  const PAUSE_CHARS = 30; // "virtual" chars between lines = pause duration at 40ms each = 1.2s
+
+  useEffect(() => {
+    if (!isRecording || isPaused) {
+      if (transcriptIntervalRef.current) {
+        clearInterval(transcriptIntervalRef.current);
+        transcriptIntervalRef.current = null;
+      }
+      if (confidenceIntervalRef.current) {
+        clearInterval(confidenceIntervalRef.current);
+        confidenceIntervalRef.current = null;
+      }
+      return;
+    }
+
+    // Compute boundaries: each line occupies line.text.length + PAUSE_CHARS (except last)
+    const boundaries: { lineStart: number; lineEnd: number }[] = [];
+    let cursor = 0;
+    for (let i = 0; i < TRANSCRIPT_LINES.length; i++) {
+      const start = cursor;
+      const end = cursor + TRANSCRIPT_LINES[i].text.length;
+      boundaries.push({ lineStart: start, lineEnd: end });
+      cursor = end + (i < TRANSCRIPT_LINES.length - 1 ? PAUSE_CHARS : 0);
+    }
+    const totalVirtualChars = cursor;
+
+    // Use a ref-like approach via closure for the global position
+    let globalPos = 0;
+
+    // Determine initial position from current state so pause/resume works
+    for (let i = 0; i < transcriptVisibleLines && i < boundaries.length; i++) {
+      globalPos = boundaries[i].lineEnd + PAUSE_CHARS;
+    }
+    if (transcriptVisibleLines < TRANSCRIPT_LINES.length) {
+      globalPos = (boundaries[transcriptVisibleLines]?.lineStart ?? globalPos) + transcriptCharIndex;
+    }
+
+    const startDelay = setTimeout(() => {
+      transcriptIntervalRef.current = setInterval(() => {
+        globalPos += 2; // advance 2 chars per tick
+
+        if (globalPos >= totalVirtualChars) {
+          // All lines done
+          globalPos = totalVirtualChars;
+          setTranscriptVisibleLines(TRANSCRIPT_LINES.length);
+          setTranscriptCharIndex(TRANSCRIPT_LINES[TRANSCRIPT_LINES.length - 1].text.length);
+          if (transcriptIntervalRef.current) clearInterval(transcriptIntervalRef.current);
+          return;
+        }
+
+        // Find which line we are in
+        let foundLine = 0;
+        let charInLine = 0;
+        for (let i = 0; i < boundaries.length; i++) {
+          const { lineStart, lineEnd } = boundaries[i];
+          if (globalPos < lineEnd) {
+            // Currently typing this line
+            foundLine = i;
+            charInLine = Math.min(globalPos - lineStart, TRANSCRIPT_LINES[i].text.length);
+            break;
+          } else if (globalPos >= lineEnd && (i === boundaries.length - 1 || globalPos < boundaries[i + 1].lineStart)) {
+            // In the pause gap after this line
+            foundLine = i;
+            charInLine = TRANSCRIPT_LINES[i].text.length;
+            break;
+          }
+          // Otherwise check next line
+          foundLine = i + 1;
+          charInLine = 0;
+        }
+
+        // Update state: all lines before foundLine are fully visible
+        // foundLine itself is partially visible at charInLine chars
+        setTranscriptVisibleLines(foundLine);
+        setTranscriptCharIndex(charInLine);
+      }, 40);
+
+      // Confidence fluctuation
+      confidenceIntervalRef.current = setInterval(() => {
+        setTranscriptConfidence((prev) => {
+          const delta = (Math.random() - 0.5) * 0.6;
+          const next = prev + delta;
+          return Math.min(99.4, Math.max(96.5, next));
+        });
+      }, 800);
+    }, transcriptVisibleLines === 0 && transcriptCharIndex === 0 ? 1500 : 0);
+
+    return () => {
+      clearTimeout(startDelay);
+      if (transcriptIntervalRef.current) {
+        clearInterval(transcriptIntervalRef.current);
+        transcriptIntervalRef.current = null;
+      }
+      if (confidenceIntervalRef.current) {
+        clearInterval(confidenceIntervalRef.current);
+        confidenceIntervalRef.current = null;
+      }
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isRecording, isPaused]);
+
+  // Auto-scroll transcript to bottom
+  useEffect(() => {
+    if (transcriptScrollRef.current) {
+      transcriptScrollRef.current.scrollTop = transcriptScrollRef.current.scrollHeight;
+    }
+  }, [transcriptVisibleLines, transcriptCharIndex]);
+
   const formatTime = (seconds: number) => {
     const m = Math.floor(seconds / 60).toString().padStart(2, "0");
     const s = (seconds % 60).toString().padStart(2, "0");
@@ -192,6 +444,9 @@ export default function AIScribeNewPage() {
     setIsRecording(true);
     setIsPaused(false);
     setRecordingSeconds(0);
+    setTranscriptVisibleLines(0);
+    setTranscriptCharIndex(0);
+    setTranscriptConfidence(98.2);
   };
 
   const togglePause = () => {
@@ -323,7 +578,7 @@ export default function AIScribeNewPage() {
      ============================================ */
 
   return (
-    <div className="p-6 lg:p-8 max-w-4xl mx-auto space-y-6">
+    <div className="p-6 lg:p-8 max-w-6xl mx-auto space-y-6">
       {/* Top nav */}
       <Link
         href="/ai-notes"
@@ -447,52 +702,164 @@ export default function AIScribeNewPage() {
                 </div>
               </div>
             ) : (
-              /* Active recording UI */
-              <div className="flex flex-col items-center gap-6">
-                {/* Pulsing indicator + timer */}
-                <div className="flex items-center gap-3">
-                  <span className="relative flex h-3 w-3">
-                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-500 opacity-75" />
-                    <span className="relative inline-flex rounded-full h-3 w-3 bg-red-600" />
-                  </span>
-                  <span className="text-lg font-mono font-bold text-[var(--medos-navy)]">
-                    {formatTime(recordingSeconds)}
-                  </span>
-                  {isPaused && (
-                    <span className="text-xs font-medium text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full">
-                      Paused
+              /* Active recording UI with transcript panel */
+              <div className="flex flex-col gap-6">
+                {/* Top bar: pulsing indicator + timer + confidence */}
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <span className="relative flex h-3 w-3">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-500 opacity-75" />
+                      <span className="relative inline-flex rounded-full h-3 w-3 bg-red-600" />
                     </span>
-                  )}
+                    <span className="text-lg font-mono font-bold text-[var(--medos-navy)]">
+                      {formatTime(recordingSeconds)}
+                    </span>
+                    {isPaused && (
+                      <span className="text-xs font-medium text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full">
+                        Paused
+                      </span>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-2 text-xs text-[var(--medos-gray-500)]">
+                    <span className="font-medium">
+                      {selectedPatient?.name}
+                    </span>
+                    <span className="text-[var(--medos-gray-300)]">&middot;</span>
+                    <span>{visitType}</span>
+                  </div>
                 </div>
 
-                {/* Waveform visualization */}
-                <div className="flex items-center justify-center gap-[3px] h-16 w-full max-w-md">
-                  {Array.from({ length: 28 }).map((_, i) => (
+                {/* Main recording area: waveform left + transcript right */}
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+                  {/* Left: Waveform + recording info */}
+                  <div className="flex flex-col items-center justify-center gap-5">
+                    {/* Waveform visualization */}
+                    <div className="flex items-center justify-center gap-[3px] h-16 w-full max-w-md">
+                      {Array.from({ length: 28 }).map((_, i) => (
+                        <div
+                          key={i}
+                          className="w-1.5 rounded-full"
+                          style={{
+                            backgroundColor: isPaused ? "var(--medos-gray-300)" : "var(--medos-primary)",
+                            animation: isPaused ? "none" : `waveform 1.2s ease-in-out ${i * 0.04}s infinite alternate`,
+                            height: isPaused ? "8px" : undefined,
+                            opacity: isPaused ? 0.5 : 0.7 + Math.random() * 0.3,
+                          }}
+                        />
+                      ))}
+                    </div>
+
+                    {/* Recording info */}
+                    <div className="text-center">
+                      <p className="text-sm font-medium text-[var(--medos-gray-700)]">
+                        {isPaused ? "Recording paused" : "Listening..."}
+                      </p>
+                    </div>
+
+                    {/* Confidence indicator */}
+                    <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-[var(--medos-gray-50)] border border-[var(--medos-gray-100)]">
+                      <div className="w-2 h-2 rounded-full bg-emerald-500" />
+                      <span className="text-xs font-medium text-[var(--medos-gray-600)]">
+                        Transcription Confidence:
+                      </span>
+                      <span className="text-xs font-bold font-mono text-emerald-600">
+                        {transcriptConfidence.toFixed(1)}%
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Right: Live Transcript Panel */}
+                  <div className="flex flex-col rounded-lg border border-[var(--medos-gray-200)] bg-[var(--medos-gray-50)] overflow-hidden min-h-[240px] max-h-[320px]">
+                    {/* Transcript header */}
+                    <div className="flex items-center justify-between px-4 py-2.5 border-b border-[var(--medos-gray-200)] bg-white">
+                      <div className="flex items-center gap-2">
+                        <span className="relative flex h-2 w-2">
+                          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-500 opacity-75" />
+                          <span className="relative inline-flex rounded-full h-2 w-2 bg-red-500" />
+                        </span>
+                        <span className="text-xs font-semibold text-[var(--medos-navy)] uppercase tracking-wide">
+                          Live Transcript
+                        </span>
+                      </div>
+                      <span className="text-[10px] font-mono text-[var(--medos-gray-400)]">
+                        {transcriptVisibleLines >= TRANSCRIPT_LINES.length
+                          ? TRANSCRIPT_LINES.length
+                          : transcriptVisibleLines + (transcriptCharIndex > 0 ? 1 : 0)
+                        } / {TRANSCRIPT_LINES.length} utterances
+                      </span>
+                    </div>
+
+                    {/* Transcript body */}
                     <div
-                      key={i}
-                      className="w-1.5 rounded-full"
-                      style={{
-                        backgroundColor: isPaused ? "var(--medos-gray-300)" : "var(--medos-primary)",
-                        animation: isPaused ? "none" : `waveform 1.2s ease-in-out ${i * 0.04}s infinite alternate`,
-                        height: isPaused ? "8px" : undefined,
-                        opacity: isPaused ? 0.5 : 0.7 + Math.random() * 0.3,
-                      }}
-                    />
-                  ))}
-                </div>
+                      ref={transcriptScrollRef}
+                      className="flex-1 overflow-y-auto px-4 py-3 space-y-3"
+                    >
+                      {TRANSCRIPT_LINES.map((line, lineIdx) => {
+                        // Determine what to show for this line
+                        const isFullyVisible = lineIdx < transcriptVisibleLines;
+                        const isCurrentlyTyping = lineIdx === transcriptVisibleLines && transcriptCharIndex > 0;
 
-                {/* Recording info */}
-                <div className="text-center">
-                  <p className="text-sm font-medium text-[var(--medos-gray-700)]">
-                    {isPaused ? "Recording paused" : "Listening..."}
-                  </p>
-                  <p className="text-xs text-[var(--medos-gray-400)] mt-1">
-                    {selectedPatient?.name} - {visitType}
-                  </p>
+                        if (!isFullyVisible && !isCurrentlyTyping) return null;
+
+                        const displayText = isFullyVisible
+                          ? line.text
+                          : line.text.slice(0, transcriptCharIndex);
+
+                        const showEntities = isFullyVisible;
+
+                        return (
+                          <div
+                            key={lineIdx}
+                            className="transcript-line-enter"
+                            style={{
+                              animation: "transcriptFadeIn 0.3s ease-out forwards",
+                            }}
+                          >
+                            <div className="flex items-start gap-2">
+                              {/* Speaker label */}
+                              <span
+                                className={`flex-shrink-0 inline-flex items-center justify-center w-7 h-5 rounded text-[10px] font-bold mt-0.5 ${
+                                  line.speaker === "DR"
+                                    ? "bg-blue-100 text-blue-700"
+                                    : "bg-violet-100 text-violet-700"
+                                }`}
+                              >
+                                {line.speaker}
+                              </span>
+
+                              {/* Text content */}
+                              <p className="text-sm text-[var(--medos-gray-700)] leading-relaxed flex-1">
+                                {showEntities
+                                  ? renderTranscriptText(displayText, line.entities)
+                                  : displayText
+                                }
+                                {/* Typing cursor for current line */}
+                                {isCurrentlyTyping && (
+                                  <span className="inline-block w-0.5 h-3.5 bg-[var(--medos-primary)] ml-0.5 animate-pulse align-text-bottom" />
+                                )}
+                              </p>
+                            </div>
+                          </div>
+                        );
+                      })}
+
+                      {/* Empty state before transcript starts */}
+                      {transcriptVisibleLines === 0 && transcriptCharIndex === 0 && (
+                        <div className="flex items-center justify-center h-full min-h-[160px]">
+                          <div className="text-center">
+                            <Loader2 className="w-5 h-5 text-[var(--medos-gray-300)] animate-spin mx-auto mb-2" />
+                            <p className="text-xs text-[var(--medos-gray-400)]">
+                              Initializing speech recognition...
+                            </p>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
                 </div>
 
                 {/* Controls */}
-                <div className="flex items-center gap-3">
+                <div className="flex items-center justify-center gap-3">
                   <button
                     onClick={togglePause}
                     className="flex items-center gap-2 px-4 py-2.5 rounded-lg border border-[var(--medos-gray-300)] bg-white text-sm font-medium text-[var(--medos-gray-700)] hover:bg-[var(--medos-gray-50)] transition-default"
@@ -719,6 +1086,9 @@ export default function AIScribeNewPage() {
                 setRecordingSeconds(0);
                 setVisibleSections([]);
                 setTypedText({});
+                setTranscriptVisibleLines(0);
+                setTranscriptCharIndex(0);
+                setTranscriptConfidence(98.2);
               }}
               className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg border border-[var(--medos-gray-300)] bg-white text-sm font-medium text-[var(--medos-gray-700)] hover:bg-[var(--medos-gray-50)] transition-default"
             >
@@ -748,6 +1118,16 @@ export default function AIScribeNewPage() {
           from {
             opacity: 0;
             transform: translateY(8px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+        @keyframes transcriptFadeIn {
+          from {
+            opacity: 0;
+            transform: translateY(12px);
           }
           to {
             opacity: 1;

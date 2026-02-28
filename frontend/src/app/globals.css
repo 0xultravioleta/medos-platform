@@ -228,3 +228,18 @@ html {
 .animate-spin-slow {
   animation: spin 1.2s linear infinite;
 }
+
+/* ============================================
+   Fade-in animation (used by AI confidence badges etc.)
+   ============================================ */
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

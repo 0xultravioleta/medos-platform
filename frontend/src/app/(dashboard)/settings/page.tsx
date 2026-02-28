@@ -34,8 +34,8 @@ export default function SettingsPage() {
   };
 
   const profileFields = [
-    { label: "Full Name", value: name, onChange: (v: string) => setName(v), placeholder: "Dr. Di Reze" },
-    { label: "Email", value: email, onChange: (v: string) => setEmail(v), placeholder: "dr.direze@sunshinemedical.com" },
+    { label: "Full Name", value: name, onChange: (v: string) => setName(v), placeholder: "Dr. Justin" },
+    { label: "Email", value: email, onChange: (v: string) => setEmail(v), placeholder: "justin@medos.ai" },
     { label: "NPI Number", value: npi, onChange: (v: string) => setNpi(v), placeholder: "1234567890" },
     { label: "Specialty", value: specialty, onChange: (v: string) => setSpecialty(v), placeholder: "Internal Medicine" },
   ];

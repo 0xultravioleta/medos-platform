@@ -1,7 +1,25 @@
 "use client";
 
 import { useState, useEffect, useMemo, useRef, Fragment } from "react";
-import { DollarSign, Send, AlertTriangle, CheckCircle2, Clock, Search, Filter, ChevronDown, Eye, RotateCcw, Radar } from "lucide-react";
+import {
+  DollarSign,
+  Send,
+  AlertTriangle,
+  CheckCircle2,
+  Clock,
+  Search,
+  Filter,
+  ChevronDown,
+  Eye,
+  RotateCcw,
+  Radar,
+  ArrowUpRight,
+  TrendingDown,
+  Sparkles,
+  Shield,
+  Zap,
+  AlertCircle,
+} from "lucide-react";
 import { getClaims, type Claim } from "@/lib/api";
 
 const MOCK_CLAIMS: Claim[] = [
@@ -55,6 +73,26 @@ const MOCK_CLAIMS: Claim[] = [
     status: "approved",
     date: "Feb 25, 2026",
   },
+];
+
+const CLAIM_CONFIDENCE: Record<string, number> = {
+  "CLM-2026-0847": 92,
+  "CLM-2026-0846": 96,
+  "CLM-2026-0845": 87,
+  "CLM-2026-0844": 34,
+  "CLM-2026-0843": 94,
+};
+
+function getConfidenceColor(score: number): string {
+  if (score > 90) return "bg-emerald-50 text-emerald-700 border-emerald-200";
+  if (score >= 70) return "bg-amber-50 text-amber-700 border-amber-200";
+  return "bg-red-50 text-red-700 border-red-200";
+}
+
+const DENIAL_REASONS = [
+  { label: "Medical Necessity Documentation", pct: 32 },
+  { label: "Coding Error / Mismatch", pct: 28 },
+  { label: "Prior Authorization Missing", pct: 18 },
 ];
 
 const STATUS_MAP: Record<string, { label: string; style: string; icon: typeof CheckCircle2 }> = {
@@ -261,6 +299,7 @@ export default function ClaimsPage() {
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [expandedClaim, setExpandedClaim] = useState<string | null>(null);
+  const [denialPanelOpen, setDenialPanelOpen] = useState(false);
 
   useEffect(() => {
     getClaims().then((apiData) => {
@@ -344,6 +383,136 @@ export default function ClaimsPage() {
         </div>
       </div>
 
+      {/* Revenue Intelligence */}
+      <div className="space-y-4">
+        {/* Revenue Opportunity Cards */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          {/* Recoverable Revenue */}
+          <div className="group relative bg-white rounded-xl border border-[var(--medos-gray-200)] shadow-medos-sm p-5 hover:shadow-md hover:border-emerald-200 hover:-translate-y-0.5 transition-all duration-200 cursor-pointer">
+            <div className="flex items-start justify-between">
+              <div>
+                <p className="text-xs font-medium text-[var(--medos-gray-500)] uppercase tracking-wider">
+                  Recoverable Revenue
+                </p>
+                <p className="text-2xl font-bold text-emerald-600 mt-1">$12,450</p>
+                <p className="text-xs text-[var(--medos-gray-500)] mt-1">
+                  From 4 appealable denied claims
+                </p>
+              </div>
+              <div className="flex items-center justify-center w-9 h-9 rounded-lg bg-emerald-50 text-emerald-600 group-hover:bg-emerald-100 transition-colors">
+                <ArrowUpRight className="w-5 h-5" />
+              </div>
+            </div>
+          </div>
+
+          {/* Avg Days-to-Payment */}
+          <div className="group relative bg-white rounded-xl border border-[var(--medos-gray-200)] shadow-medos-sm p-5 hover:shadow-md hover:border-blue-200 hover:-translate-y-0.5 transition-all duration-200 cursor-pointer">
+            <div className="flex items-start justify-between">
+              <div>
+                <p className="text-xs font-medium text-[var(--medos-gray-500)] uppercase tracking-wider">
+                  Avg Days-to-Payment
+                </p>
+                <p className="text-2xl font-bold text-[var(--medos-navy)] mt-1">18.3</p>
+                <p className="text-xs text-emerald-600 mt-1">
+                  3.2 days faster than last quarter
+                </p>
+              </div>
+              <div className="flex items-center justify-center w-9 h-9 rounded-lg bg-blue-50 text-blue-600 group-hover:bg-blue-100 transition-colors">
+                <TrendingDown className="w-5 h-5" />
+              </div>
+            </div>
+          </div>
+
+          {/* Pre-Submit AI Accuracy */}
+          <div className="group relative bg-white rounded-xl border border-[var(--medos-gray-200)] shadow-medos-sm p-5 hover:shadow-md hover:border-violet-200 hover:-translate-y-0.5 transition-all duration-200 cursor-pointer">
+            <div className="flex items-start justify-between">
+              <div>
+                <p className="text-xs font-medium text-[var(--medos-gray-500)] uppercase tracking-wider">
+                  Pre-Submit AI Accuracy
+                </p>
+                <p className="text-2xl font-bold text-violet-600 mt-1">94.7%</p>
+                <p className="text-xs text-[var(--medos-gray-500)] mt-1">
+                  Claims auto-coded correctly
+                </p>
+              </div>
+              <div className="flex items-center justify-center w-9 h-9 rounded-lg bg-violet-50 text-violet-600 group-hover:bg-violet-100 transition-colors">
+                <Sparkles className="w-5 h-5" />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Denial Prevention Panel */}
+        <div className="rounded-xl border border-[var(--medos-gray-200)] shadow-medos-sm overflow-hidden">
+          <button
+            onClick={() => setDenialPanelOpen(!denialPanelOpen)}
+            className="w-full flex items-center justify-between px-5 py-4 bg-gradient-to-r from-slate-50 via-white to-blue-50 hover:from-slate-100 hover:via-white hover:to-blue-100 transition-colors"
+          >
+            <div className="flex items-center gap-3">
+              <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-[var(--medos-primary-light)]">
+                <Shield className="w-4 h-4 text-[var(--medos-primary)]" />
+              </div>
+              <div className="text-left">
+                <p className="text-sm font-semibold text-[var(--medos-navy)]">
+                  AI Denial Prevention Insights
+                </p>
+                <p className="text-xs text-[var(--medos-gray-500)]">
+                  Top denial reasons and AI-powered corrections
+                </p>
+              </div>
+            </div>
+            <ChevronDown
+              className={`w-5 h-5 text-[var(--medos-gray-400)] transition-transform duration-300 ${
+                denialPanelOpen ? "rotate-180" : ""
+              }`}
+            />
+          </button>
+
+          <div
+            className={`overflow-hidden transition-all duration-300 ease-in-out ${
+              denialPanelOpen ? "max-h-96 opacity-100" : "max-h-0 opacity-0"
+            }`}
+          >
+            <div className="px-5 pb-5 pt-2 bg-gradient-to-br from-slate-50/80 via-white to-blue-50/60">
+              <div className="space-y-3">
+                {DENIAL_REASONS.map((reason) => (
+                  <div key={reason.label} className="flex items-center gap-3">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center justify-between mb-1">
+                        <p className="text-sm text-[var(--medos-gray-700)] font-medium truncate">
+                          {reason.label}
+                        </p>
+                        <span className="text-xs font-semibold text-[var(--medos-gray-500)] tabular-nums ml-2">
+                          {reason.pct}%
+                        </span>
+                      </div>
+                      <div className="w-full h-2 bg-[var(--medos-gray-100)] rounded-full overflow-hidden">
+                        <div
+                          className="h-full rounded-full bg-gradient-to-r from-[var(--medos-primary)] to-blue-400 transition-all duration-500"
+                          style={{ width: `${reason.pct}%` }}
+                        />
+                      </div>
+                    </div>
+                    <button className="flex-shrink-0 inline-flex items-center gap-1 px-2 py-1 rounded-md bg-violet-50 text-violet-700 text-[10px] font-semibold border border-violet-200 hover:bg-violet-100 transition-colors">
+                      <Zap className="w-3 h-3" />
+                      AI Fix
+                    </button>
+                  </div>
+                ))}
+              </div>
+
+              <div className="mt-4 pt-3 border-t border-[var(--medos-gray-100)]">
+                <p className="text-xs text-[var(--medos-gray-500)]">
+                  <span className="font-semibold text-emerald-600">AI prevented 23 potential denials</span>{" "}
+                  this month, saving an estimated{" "}
+                  <span className="font-semibold text-emerald-600">$8,740</span>
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
       {/* Search */}
       <div className="relative">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--medos-gray-400)]" />
@@ -422,12 +591,26 @@ export default function ClaimsPage() {
                       ${claim.amount.toFixed(2)}
                     </td>
                     <td className="px-6 py-4">
-                      <span
-                        className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium ${statusInfo?.style || ""}`}
-                      >
-                        {StatusIcon && <StatusIcon className="w-3 h-3" />}
-                        {statusInfo?.label || claim.status}
-                      </span>
+                      <div className="flex flex-col items-start gap-1.5">
+                        <span
+                          className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium ${statusInfo?.style || ""}`}
+                        >
+                          {StatusIcon && <StatusIcon className="w-3 h-3" />}
+                          {statusInfo?.label || claim.status}
+                        </span>
+                        {CLAIM_CONFIDENCE[claim.id] != null && (
+                          <span
+                            className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold border animate-[fadeIn_0.5s_ease-in-out] ${getConfidenceColor(
+                              CLAIM_CONFIDENCE[claim.id]
+                            )}`}
+                          >
+                            {CLAIM_CONFIDENCE[claim.id] < 70 && (
+                              <AlertCircle className="w-3 h-3" />
+                            )}
+                            AI Confidence: {CLAIM_CONFIDENCE[claim.id]}%
+                          </span>
+                        )}
+                      </div>
                     </td>
                     <td className="px-6 py-4">
                       <div className="flex items-center justify-between">

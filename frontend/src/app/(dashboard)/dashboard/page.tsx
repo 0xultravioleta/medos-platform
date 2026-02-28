@@ -34,6 +34,18 @@ import {
   Activity,
   Timer,
   ChevronRight,
+  ChevronDown,
+  Users,
+  FileCheck,
+  Brain,
+  Shield,
+  BarChart3,
+  ArrowUpRight,
+  ArrowDownRight,
+  Zap,
+  Eye,
+  CheckCircle2,
+  Send,
 } from "lucide-react";
 
 // ---------------------------------------------------------------------------
@@ -107,9 +119,12 @@ function getActivityIcon(type: MockRecentActivity["type"]) {
 // Stat card builder
 // ---------------------------------------------------------------------------
 
+type StatCardKey = "patients" | "claims" | "priorAuths" | "aiNotes";
+
 function buildStatsCards(stats: MockDashboardStats) {
   return [
     {
+      key: "patients" as StatCardKey,
       label: "Patients Today",
       value: stats.appointmentsToday,
       change: "+12%",
@@ -117,8 +132,10 @@ function buildStatsCards(stats: MockDashboardStats) {
       icon: Calendar,
       iconBg: "bg-blue-50",
       iconColor: "text-[#0066FF]",
+      expandedBorder: "border-blue-400",
     },
     {
+      key: "claims" as StatCardKey,
       label: "Pending Claims",
       value: `$${stats.pendingClaims}`,
       change: "-5%",
@@ -126,8 +143,10 @@ function buildStatsCards(stats: MockDashboardStats) {
       icon: DollarSign,
       iconBg: "bg-emerald-50",
       iconColor: "text-emerald-600",
+      expandedBorder: "border-emerald-400",
     },
     {
+      key: "priorAuths" as StatCardKey,
       label: "Prior Auths",
       value: `${stats.pendingPriorAuths} pending`,
       change: "+3%",
@@ -135,8 +154,10 @@ function buildStatsCards(stats: MockDashboardStats) {
       icon: Clock,
       iconBg: "bg-amber-50",
       iconColor: "text-amber-600",
+      expandedBorder: "border-amber-400",
     },
     {
+      key: "aiNotes" as StatCardKey,
       label: "AI Notes Today",
       value: stats.aiNotesGenerated,
       change: "+28%",
@@ -144,8 +165,302 @@ function buildStatsCards(stats: MockDashboardStats) {
       icon: Sparkles,
       iconBg: "bg-purple-50",
       iconColor: "text-purple-600",
+      expandedBorder: "border-purple-400",
     },
   ];
+}
+
+// ---------------------------------------------------------------------------
+// KPI Drill-Down Panels
+// ---------------------------------------------------------------------------
+
+function PatientsDrillDown() {
+  return (
+    <div className="space-y-3">
+      <div className="grid grid-cols-3 gap-2">
+        <div className="rounded-lg bg-blue-50/60 p-2.5 text-center">
+          <div className="flex items-center justify-center gap-1 text-xs text-gray-500">
+            <Calendar className="h-3 w-3" />
+            Scheduled
+          </div>
+          <p className="mt-1 text-lg font-bold text-[#0F172A]">18</p>
+        </div>
+        <div className="rounded-lg bg-amber-50/60 p-2.5 text-center">
+          <div className="flex items-center justify-center gap-1 text-xs text-gray-500">
+            <Users className="h-3 w-3" />
+            Walk-in
+          </div>
+          <p className="mt-1 text-lg font-bold text-[#0F172A]">4</p>
+        </div>
+        <div className="rounded-lg bg-red-50/60 p-2.5 text-center">
+          <div className="flex items-center justify-center gap-1 text-xs text-gray-500">
+            <AlertTriangle className="h-3 w-3" />
+            Urgent
+          </div>
+          <p className="mt-1 text-lg font-bold text-[#0F172A]">2</p>
+        </div>
+      </div>
+      <div className="space-y-2 text-sm">
+        <div className="flex items-center justify-between text-gray-600">
+          <span className="flex items-center gap-1.5">
+            <Activity className="h-3.5 w-3.5 text-gray-400" />
+            No-show rate today
+          </span>
+          <span className="font-medium text-[#0F172A]">4.2%</span>
+        </div>
+        <div className="flex items-center justify-between text-gray-600">
+          <span className="flex items-center gap-1.5">
+            <BarChart3 className="h-3.5 w-3.5 text-gray-400" />
+            Busiest hour
+          </span>
+          <span className="font-medium text-[#0F172A]">10:00-11:00 AM (6 pts)</span>
+        </div>
+        <div className="mt-2 flex items-center gap-1.5 rounded-lg bg-blue-50 px-3 py-2 text-xs font-medium text-blue-700">
+          <Clock className="h-3.5 w-3.5" />
+          Next available slot: 2:30 PM
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ClaimsDrillDown() {
+  const payers = [
+    { name: "BCBS", amount: "$12.4K", pct: 33 },
+    { name: "Medicare", amount: "$9.8K", pct: 26 },
+    { name: "Aetna", amount: "$8.2K", pct: 22 },
+    { name: "Other", amount: "$7.6K", pct: 19 },
+  ];
+
+  return (
+    <div className="space-y-3">
+      <div className="space-y-1.5">
+        <p className="text-xs font-medium uppercase tracking-wider text-gray-400">By Payer</p>
+        {payers.map((p) => (
+          <div key={p.name} className="flex items-center gap-2 text-sm">
+            <span className="w-16 text-gray-600">{p.name}</span>
+            <div className="flex-1 h-2 rounded-full bg-gray-100 overflow-hidden">
+              <div
+                className="h-full rounded-full bg-emerald-400 transition-all duration-500"
+                style={{ width: `${p.pct}%` }}
+              />
+            </div>
+            <span className="w-14 text-right text-xs font-medium text-[#0F172A]">{p.amount}</span>
+          </div>
+        ))}
+      </div>
+      <div className="space-y-2 text-sm">
+        <div className="flex items-center justify-between text-gray-600">
+          <span className="flex items-center gap-1.5">
+            <Clock className="h-3.5 w-3.5 text-gray-400" />
+            Oldest pending
+          </span>
+          <span className="font-medium text-[#0F172A]">14 days (CLM-2026-0831)</span>
+        </div>
+        <div className="flex items-center justify-between text-gray-600">
+          <span className="flex items-center gap-1.5">
+            <Send className="h-3.5 w-3.5 text-gray-400" />
+            Auto-submitted today
+          </span>
+          <span className="font-medium text-[#0F172A]">8 claims</span>
+        </div>
+      </div>
+      <button
+        type="button"
+        className="mt-1 w-full rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs font-medium text-emerald-700 transition hover:bg-emerald-100"
+      >
+        Submit next batch
+      </button>
+    </div>
+  );
+}
+
+function PriorAuthsDrillDown() {
+  return (
+    <div className="space-y-3">
+      <div className="grid grid-cols-2 gap-2">
+        <div className="rounded-lg bg-emerald-50/60 p-2.5 text-center">
+          <div className="flex items-center justify-center gap-1 text-xs text-gray-500">
+            <CheckCircle2 className="h-3 w-3" />
+            Approved today
+          </div>
+          <p className="mt-1 text-lg font-bold text-emerald-700">3</p>
+        </div>
+        <div className="rounded-lg bg-amber-50/60 p-2.5 text-center">
+          <div className="flex items-center justify-center gap-1 text-xs text-gray-500">
+            <Timer className="h-3 w-3" />
+            Avg approval
+          </div>
+          <p className="mt-1 text-lg font-bold text-amber-700">2.4d</p>
+        </div>
+      </div>
+      <div className="space-y-2 text-sm">
+        <div className="flex items-center justify-between text-gray-600">
+          <span className="flex items-center gap-1.5">
+            <Brain className="h-3.5 w-3.5 text-red-400" />
+            AI-flagged likely denials
+          </span>
+          <span className="font-medium text-red-600">2</span>
+        </div>
+        <div className="mt-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2">
+          <div className="flex items-center gap-1.5 text-xs font-medium text-amber-800">
+            <Shield className="h-3.5 w-3.5" />
+            High Priority
+          </div>
+          <Link
+            href="/patients/p-002"
+            className="mt-1 block text-sm font-medium text-[#0066FF] transition hover:underline"
+          >
+            James Rodriguez &mdash; MRI Lumbar
+          </Link>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function AINotesDrillDown() {
+  return (
+    <div className="space-y-3">
+      <div className="grid grid-cols-2 gap-2">
+        <div className="rounded-lg bg-purple-50/60 p-2.5 text-center">
+          <div className="flex items-center justify-center gap-1 text-xs text-gray-500">
+            <Zap className="h-3 w-3" />
+            Avg confidence
+          </div>
+          <p className="mt-1 text-lg font-bold text-purple-700">94.2%</p>
+        </div>
+        <div className="rounded-lg bg-amber-50/60 p-2.5 text-center">
+          <div className="flex items-center justify-center gap-1 text-xs text-gray-500">
+            <Eye className="h-3 w-3" />
+            Pending review
+          </div>
+          <p className="mt-1 text-lg font-bold text-amber-700">8</p>
+        </div>
+      </div>
+      <div className="space-y-2 text-sm">
+        <div className="flex items-center justify-between text-gray-600">
+          <span className="flex items-center gap-1.5">
+            <FileCheck className="h-3.5 w-3.5 text-gray-400" />
+            Auto-signed (&gt;95% conf)
+          </span>
+          <span className="font-medium text-[#0F172A]">112</span>
+        </div>
+        <div className="flex items-center justify-between text-gray-600">
+          <span className="flex items-center gap-1.5">
+            <Timer className="h-3.5 w-3.5 text-gray-400" />
+            Time saved vs manual
+          </span>
+          <span className="font-medium text-emerald-600">12.4 hrs</span>
+        </div>
+      </div>
+      <Link
+        href="/ai-notes"
+        className="mt-1 flex w-full items-center justify-center gap-1.5 rounded-lg border border-purple-200 bg-purple-50 px-3 py-2 text-xs font-medium text-purple-700 transition hover:bg-purple-100"
+      >
+        <Eye className="h-3.5 w-3.5" />
+        View pending reviews
+      </Link>
+    </div>
+  );
+}
+
+function getDrillDown(key: StatCardKey) {
+  switch (key) {
+    case "patients":
+      return <PatientsDrillDown />;
+    case "claims":
+      return <ClaimsDrillDown />;
+    case "priorAuths":
+      return <PriorAuthsDrillDown />;
+    case "aiNotes":
+      return <AINotesDrillDown />;
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Sparkline-style mini bar chart for Patient Volume Trend
+// ---------------------------------------------------------------------------
+
+function MiniSparkBars() {
+  const days = [62, 58, 71, 65, 74, 68, 80];
+  const max = Math.max(...days);
+  return (
+    <div className="flex items-end gap-1 h-8">
+      {days.map((v, i) => (
+        <div
+          key={i}
+          className="w-2 rounded-sm bg-blue-400/70 transition-all duration-300"
+          style={{ height: `${(v / max) * 100}%` }}
+          title={`Day ${i + 1}: ${v} patients`}
+        />
+      ))}
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Forecast Row
+// ---------------------------------------------------------------------------
+
+function ForecastRow() {
+  return (
+    <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+      {/* Projected Monthly Revenue */}
+      <div className="relative overflow-hidden rounded-xl border border-gray-100 bg-gradient-to-br from-emerald-50/80 via-white to-emerald-50/40 p-5 shadow-sm">
+        <div className="absolute right-3 top-3">
+          <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100/80 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-emerald-700">
+            <Brain className="h-3 w-3 animate-pulse" />
+            AI Forecast
+          </span>
+        </div>
+        <p className="text-xs font-medium uppercase tracking-wider text-gray-400">Projected Monthly Revenue</p>
+        <p className="mt-2 text-2xl font-bold text-[#0F172A]">$312,400</p>
+        <div className="mt-2 flex items-center gap-1 text-xs">
+          <ArrowUpRight className="h-3.5 w-3.5 text-emerald-500" />
+          <span className="font-medium text-emerald-600">+8.2%</span>
+          <span className="text-gray-400">vs last month</span>
+        </div>
+      </div>
+
+      {/* Predicted Denial Rate */}
+      <div className="relative overflow-hidden rounded-xl border border-gray-100 bg-gradient-to-br from-red-50/60 via-white to-red-50/30 p-5 shadow-sm">
+        <div className="absolute right-3 top-3">
+          <span className="inline-flex items-center gap-1 rounded-full bg-red-100/80 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-red-700">
+            <Brain className="h-3 w-3 animate-pulse" />
+            AI Forecast
+          </span>
+        </div>
+        <p className="text-xs font-medium uppercase tracking-wider text-gray-400">Predicted Denial Rate EOQ</p>
+        <p className="mt-2 text-2xl font-bold text-[#0F172A]">3.8%</p>
+        <div className="mt-2 flex items-center gap-1 text-xs">
+          <ArrowDownRight className="h-3.5 w-3.5 text-emerald-500" />
+          <span className="font-medium text-emerald-600">Target: &lt;4.0%</span>
+          <span className="text-gray-400">on track</span>
+        </div>
+      </div>
+
+      {/* Patient Volume Trend */}
+      <div className="relative overflow-hidden rounded-xl border border-gray-100 bg-gradient-to-br from-blue-50/60 via-white to-blue-50/30 p-5 shadow-sm">
+        <div className="absolute right-3 top-3">
+          <span className="inline-flex items-center gap-1 rounded-full bg-blue-100/80 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-blue-700">
+            <Brain className="h-3 w-3 animate-pulse" />
+            AI Forecast
+          </span>
+        </div>
+        <p className="text-xs font-medium uppercase tracking-wider text-gray-400">Patient Volume Trend</p>
+        <div className="mt-2 flex items-center gap-3">
+          <p className="text-2xl font-bold text-[#0F172A]">+14%</p>
+          <MiniSparkBars />
+        </div>
+        <div className="mt-2 flex items-center gap-1 text-xs">
+          <ArrowUpRight className="h-3.5 w-3.5 text-blue-500" />
+          <span className="font-medium text-blue-600">Last 7 days</span>
+          <span className="text-gray-400">trending upward</span>
+        </div>
+      </div>
+    </div>
+  );
 }
 
 // ---------------------------------------------------------------------------
@@ -159,6 +474,7 @@ export default function DashboardPage() {
   const [appointments, setAppointments] = useState<MockAppointment[]>(MOCK_TODAYS_APPOINTMENTS);
   const [activity, setActivity] = useState<MockRecentActivity[]>(MOCK_RECENT_ACTIVITY);
   const [loading, setLoading] = useState(true);
+  const [expandedCard, setExpandedCard] = useState<StatCardKey | null>(null);
 
   useEffect(() => {
     Promise.all([
@@ -182,6 +498,10 @@ export default function DashboardPage() {
   });
 
   const statsCards = buildStatsCards(stats);
+
+  function handleCardClick(key: StatCardKey) {
+    setExpandedCard((prev) => (prev === key ? null : key));
+  }
 
   if (loading) {
     return (
@@ -221,14 +541,29 @@ export default function DashboardPage() {
       </div>
 
       {/* ---------------------------------------------------------------- */}
-      {/* 2. Stats Grid                                                    */}
+      {/* 2. Interactive Stats Grid                                        */}
       {/* ---------------------------------------------------------------- */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {statsCards.map((stat) => {
           const Icon = stat.icon;
+          const isExpanded = expandedCard === stat.key;
           return (
-            <Card key={stat.label}>
-              <CardContent className="p-5">
+            <div
+              key={stat.key}
+              className={`rounded-xl border bg-white shadow-sm transition-all duration-300 cursor-pointer
+                ${isExpanded ? `${stat.expandedBorder} border-2 shadow-md` : "border-gray-100 hover:shadow-md hover:scale-[1.02]"}
+              `}
+              onClick={() => handleCardClick(stat.key)}
+              role="button"
+              tabIndex={0}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                  e.preventDefault();
+                  handleCardClick(stat.key);
+                }
+              }}
+            >
+              <div className="p-5">
                 <div className="flex items-start justify-between">
                   <div>
                     <p className="text-3xl font-bold text-[#0F172A]">
@@ -236,10 +571,17 @@ export default function DashboardPage() {
                     </p>
                     <p className="mt-1 text-sm text-gray-500">{stat.label}</p>
                   </div>
-                  <div
-                    className={`flex h-10 w-10 items-center justify-center rounded-lg ${stat.iconBg}`}
-                  >
-                    <Icon className={`h-5 w-5 ${stat.iconColor}`} />
+                  <div className="flex items-center gap-2">
+                    <div
+                      className={`flex h-10 w-10 items-center justify-center rounded-lg ${stat.iconBg}`}
+                    >
+                      <Icon className={`h-5 w-5 ${stat.iconColor}`} />
+                    </div>
+                    <ChevronDown
+                      className={`h-4 w-4 text-gray-400 transition-transform duration-300 ${
+                        isExpanded ? "rotate-180" : ""
+                      }`}
+                    />
                   </div>
                 </div>
                 <div className="mt-3 flex items-center gap-1 text-xs">
@@ -253,11 +595,27 @@ export default function DashboardPage() {
                   </span>
                   <span className="text-gray-400">vs last week</span>
                 </div>
-              </CardContent>
-            </Card>
+              </div>
+
+              {/* Expandable drill-down panel */}
+              <div
+                className={`overflow-hidden transition-all duration-300 ease-in-out ${
+                  isExpanded ? "max-h-[500px] opacity-100" : "max-h-0 opacity-0"
+                }`}
+              >
+                <div className="border-t border-gray-100 px-5 pb-5 pt-4">
+                  {getDrillDown(stat.key)}
+                </div>
+              </div>
+            </div>
           );
         })}
       </div>
+
+      {/* ---------------------------------------------------------------- */}
+      {/* 2b. AI Forecast Row                                              */}
+      {/* ---------------------------------------------------------------- */}
+      <ForecastRow />
 
       {/* ---------------------------------------------------------------- */}
       {/* 3. Schedule + Activity Feed                                      */}
