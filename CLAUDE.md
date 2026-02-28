@@ -188,11 +188,22 @@ Task IDs: `S{sprint}-T{numero}` (ej: `S0-T18` = Sprint 0, Task 18)
 - [x] S0-T18: FastAPI project scaffold (in-memory store, sin DB real aun)
 - [x] S0-T19: Dockerfile + docker-compose (API + PostgreSQL 17 + Redis)
 
-### En progreso:
-- [ ] S0-T20: Alembic migrations + schema-per-tenant
-- [ ] S0-T21: GitHub Actions CI pipeline
-
 ### Proximas tasks:
-- [ ] S0-T24: SMART on FHIR OAuth2 flow
-- [ ] S0-T25: JWT validation middleware + tenant routing
-- [ ] S0-T30: User + Tenant SQLAlchemy models
+- [ ] Frontend Next.js 15 con login page y patient dashboard
+- [ ] Wire FHIR routes a PostgreSQL real (conectar FHIRRepository)
+- [ ] AI Documentation agent (LangGraph + Claude)
+
+---
+
+## PROGRESS REPORT
+
+**REGLA: Despues de cada commit significativo, actualizar `PROGRESS.md` en la raiz del repo.**
+
+PROGRESS.md cuenta la historia del proyecto de forma narrativa y no-tecnica, como si un candidato le estuviera mostrando a un hiring manager lo que logro. Incluye:
+- Que se hizo y POR QUE (no solo el "what")
+- El approach sistematico (research → decisions → build)
+- Metricas concretas (tests, coverage, lineas, docs)
+- Tabla "Mock vs Production-Ready" siempre actualizada
+- "What's Next" con los siguientes pasos claros
+
+El tono es profesional pero conversacional. No es un changelog tecnico -- es una historia de progreso.
