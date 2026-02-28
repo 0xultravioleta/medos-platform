@@ -131,20 +131,53 @@ Completed the full navigation — every sidebar link now works:
 
 **Build**: 0 TypeScript errors across all 9 routes. 902 lines of new UI code.
 
+#### Phase 5: API Layer, AI Scribe & Deployment Prep
+
+This phase was executed with 4 parallel agents working simultaneously — demonstrating the team coordination approach we'd use in production.
+
+**Commit**: `feat: add backend API, interactive AI Scribe, frontend-backend wiring, Vercel config`
+
+**Backend Mock API** (Agent 1):
+- 7 REST endpoints at `/api/v1/*`: patients, appointments, dashboard stats/activity, claims, AI notes
+- Pydantic response models with camelCase serialization (matching frontend expectations)
+- 16 new tests (56 total, all passing in 0.86s)
+
+**Interactive AI Scribe** (Agent 2) — the showcase feature:
+- Full 3-stage simulation at `/ai-notes/new`:
+  1. **Recording**: patient/visit type selectors, animated waveform (28 CSS bars), pulsing red dot, timer
+  2. **AI Processing**: 5 steps with animated checkmarks and progress bar (transcribe → entities → SOAP → ICD-10 → CPT)
+  3. **Generated Note**: SOAP note with typewriter effect, confidence badge (94%), suggested ICD-10/CPT codes with individual confidence scores
+- Dynamic content per patient (diabetes, cardiac, heart failure variants)
+- Zero external libraries — pure CSS animations + React state
+
+**Frontend-Backend Wiring** (Agent 3):
+- API client (`src/lib/api.ts`) with typed fetch functions for all 7 endpoints
+- Every page now fetches from backend API with graceful fallback to local mock data
+- Loading spinners during data fetch
+- App works with OR without backend running — critical for demo reliability
+
+**Vercel Deployment Config** (Agent 4):
+- `vercel.json` targeting iad1 (US East, closest to Miami)
+- Environment configuration for production and local development
+- Ready for one-click deploy via Vercel dashboard or CLI
+
+**Build**: 11 routes, 0 TypeScript errors, 1,774 lines added. 56 backend tests passing.
+
 ---
 
 ## Current State
 
 | Metric | Value |
 |--------|-------|
-| Backend source files | 25 Python modules |
-| Frontend pages | 9 routes (login + 8 dashboard views) |
-| Backend tests | 40 tests, all passing |
+| Backend source files | 28 Python modules |
+| Frontend pages | 11 routes (login + 10 dashboard views including AI Scribe) |
+| Backend tests | 56 tests, all passing |
 | Code coverage | 99% (backend) |
-| Total lines | ~5,000+ (backend + frontend) |
+| Total lines | ~7,000+ (backend + frontend) |
 | Lint status | Clean (ruff backend, TypeScript frontend) |
 | CI/CD | GitHub Actions configured |
-| Documentation | 121,860 words across 41 knowledge base docs |
+| Deployment | Vercel-ready (frontend), Docker-ready (backend) |
+| Documentation | 121,860 words across 44 knowledge base docs |
 
 ### Architecture Implemented
 
@@ -157,9 +190,9 @@ Completed the full navigation — every sidebar link now works:
 │  ┌───────────┐ ┌──────────┐ ┌──────────┐               │
 │  │Appointments│ │Analytics │ │Settings  │               │
 │  └───────────┘ └──────────┘ └──────────┘               │
-│  Mock Auth Context │ Design System │ Mock Data          │
+│  API Client (fetch w/ mock fallback) │ Design System    │
 └────────────────────────┬─────────────────────────────────┘
-                         ↕ (future: REST/FHIR API)
+                         ↕ REST API (/api/v1/*)
 ┌──────────────────────────────────────────────────────────┐
 │                  FastAPI Application                     │
 │  ┌─────────┐  ┌──────────┐  ┌────────────┐             │
@@ -185,12 +218,12 @@ Completed the full navigation — every sidebar link now works:
 | Component | Current State | Production Upgrade |
 |-----------|--------------|-------------------|
 | Frontend Auth | Mock (any credentials work) | Auth0 with PKCE flow |
-| Frontend Data | Hardcoded mock data | Fetch from FastAPI endpoints |
+| Frontend Data | API fetch with mock fallback | Real-time data from FHIR store |
 | FHIR Patient CRUD | In-memory dict | Wire to PostgreSQL via FHIRRepository |
 | Backend Auth | HS256 dev tokens | Auth0 with RS256 JWKS |
 | Database | Schema + migrations ready | Run `alembic upgrade head`, wire sessions |
 | Tenant Isolation | Middleware built | Add `Depends(get_tenant_db)` to routes |
-| AI Agents | Mock SOAP note in UI | LangGraph + Claude API |
+| AI Scribe | Interactive simulation (3 stages) | LangGraph + Claude via Bedrock (HIPAA) |
 | Claims Processing | Mock data in UI | X12 837P generation, payer APIs |
 | Analytics | Static charts | Real-time data aggregation |
 | Audit Trail | AuditEvent builder ready | Persist to database |
