@@ -1,38 +1,110 @@
 "use client";
 
-import { Settings, User, Building2, Shield, Bell, Palette, Database } from "lucide-react";
+import { useState } from "react";
+import { Settings, User, Building2, Shield, Bell, Palette, Database, CheckCircle2, Check } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
-
-const SETTINGS_SECTIONS = [
-  {
-    icon: User,
-    title: "Profile",
-    description: "Manage your personal information and credentials",
-    fields: [
-      { label: "Full Name", value: "", placeholder: "Dr. Di Reze" },
-      { label: "Email", value: "", placeholder: "dr.direze@sunshinemedical.com" },
-      { label: "NPI Number", value: "", placeholder: "1234567890" },
-      { label: "Specialty", value: "", placeholder: "Internal Medicine" },
-    ],
-  },
-  {
-    icon: Building2,
-    title: "Practice",
-    description: "Configure your practice settings",
-    fields: [
-      { label: "Practice Name", value: "", placeholder: "Sunshine Medical Group" },
-      { label: "Address", value: "", placeholder: "1200 Brickell Ave, Miami, FL 33131" },
-      { label: "Phone", value: "", placeholder: "(305) 555-0100" },
-      { label: "Tax ID", value: "", placeholder: "XX-XXXXXXX" },
-    ],
-  },
-];
 
 export default function SettingsPage() {
   const { user } = useAuth();
 
+  // Form state - Profile
+  const [name, setName] = useState("Dr. Justin");
+  const [email, setEmail] = useState("justin@medos.ai");
+  const [npi, setNpi] = useState("1234567890");
+  const [specialty, setSpecialty] = useState("Internal Medicine");
+
+  // Form state - Practice
+  const [practiceName, setPracticeName] = useState("Sunshine Medical Group");
+  const [address, setAddress] = useState("1200 Brickell Ave, Miami, FL 33131");
+  const [phone, setPhone] = useState("(305) 555-0100");
+  const [taxId, setTaxId] = useState("XX-XXXXXXX");
+
+  // Toggle state
+  const [emailNotifications, setEmailNotifications] = useState(true);
+  const [twoFactor, setTwoFactor] = useState(false);
+  const [aiAutoCoding, setAiAutoCoding] = useState(true);
+  const [fhirDataSharing, setFhirDataSharing] = useState(true);
+
+  // Save feedback
+  const [saved, setSaved] = useState(false);
+
+  const handleSave = () => {
+    setSaved(true);
+    setTimeout(() => setSaved(false), 3000);
+  };
+
+  const profileFields = [
+    { label: "Full Name", value: name, onChange: (v: string) => setName(v), placeholder: "Dr. Di Reze" },
+    { label: "Email", value: email, onChange: (v: string) => setEmail(v), placeholder: "dr.direze@sunshinemedical.com" },
+    { label: "NPI Number", value: npi, onChange: (v: string) => setNpi(v), placeholder: "1234567890" },
+    { label: "Specialty", value: specialty, onChange: (v: string) => setSpecialty(v), placeholder: "Internal Medicine" },
+  ];
+
+  const practiceFields = [
+    { label: "Practice Name", value: practiceName, onChange: (v: string) => setPracticeName(v), placeholder: "Sunshine Medical Group" },
+    { label: "Address", value: address, onChange: (v: string) => setAddress(v), placeholder: "1200 Brickell Ave, Miami, FL 33131" },
+    { label: "Phone", value: phone, onChange: (v: string) => setPhone(v), placeholder: "(305) 555-0100" },
+    { label: "Tax ID", value: taxId, onChange: (v: string) => setTaxId(v), placeholder: "XX-XXXXXXX" },
+  ];
+
+  const sections = [
+    {
+      icon: User,
+      title: "Profile",
+      description: "Manage your personal information and credentials",
+      fields: profileFields,
+    },
+    {
+      icon: Building2,
+      title: "Practice",
+      description: "Configure your practice settings",
+      fields: practiceFields,
+    },
+  ];
+
+  const toggles = [
+    {
+      icon: Bell,
+      label: "Email Notifications",
+      desc: "Receive alerts for appointments and claims updates",
+      value: emailNotifications,
+      toggle: () => setEmailNotifications(!emailNotifications),
+    },
+    {
+      icon: Shield,
+      label: "Two-Factor Authentication",
+      desc: "Add an extra layer of security to your account",
+      value: twoFactor,
+      toggle: () => setTwoFactor(!twoFactor),
+    },
+    {
+      icon: Palette,
+      label: "AI Auto-Coding",
+      desc: "Automatically suggest ICD-10 and CPT codes during encounters",
+      value: aiAutoCoding,
+      toggle: () => setAiAutoCoding(!aiAutoCoding),
+    },
+    {
+      icon: Database,
+      label: "FHIR Data Sharing",
+      desc: "Enable interoperability with connected EHR systems",
+      value: fhirDataSharing,
+      toggle: () => setFhirDataSharing(!fhirDataSharing),
+    },
+  ];
+
   return (
     <div className="p-6 lg:p-8 max-w-4xl mx-auto space-y-6">
+      {/* Save confirmation banner */}
+      {saved && (
+        <div
+          className="flex items-center gap-2 px-4 py-3 rounded-lg bg-green-50 border border-green-200 text-green-800 text-sm font-medium animate-in fade-in slide-in-from-top-2 duration-300"
+        >
+          <CheckCircle2 className="w-4 h-4 text-green-600" />
+          Settings saved successfully
+        </div>
+      )}
+
       {/* Header */}
       <div className="flex items-center gap-3">
         <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-[var(--medos-primary-light)]">
@@ -47,7 +119,7 @@ export default function SettingsPage() {
       </div>
 
       {/* Settings sections */}
-      {SETTINGS_SECTIONS.map((section) => (
+      {sections.map((section) => (
         <div
           key={section.title}
           className="bg-white rounded-xl border border-[var(--medos-gray-200)] shadow-medos-sm overflow-hidden"
@@ -72,13 +144,8 @@ export default function SettingsPage() {
                 <input
                   type="text"
                   placeholder={field.placeholder}
-                  defaultValue={
-                    field.label === "Full Name"
-                      ? user?.name || ""
-                      : field.label === "Email"
-                        ? user?.email || ""
-                        : ""
-                  }
+                  value={field.value}
+                  onChange={(e) => field.onChange(e.target.value)}
                   className="w-full h-10 px-3.5 rounded-lg border border-[var(--medos-gray-300)] bg-white text-sm text-[var(--medos-gray-900)] placeholder:text-[var(--medos-gray-400)] focus:outline-none focus:ring-2 focus:ring-[var(--medos-primary)] focus:border-transparent"
                 />
               </div>
@@ -101,32 +168,7 @@ export default function SettingsPage() {
           </div>
         </div>
         <div className="divide-y divide-[var(--medos-gray-100)]">
-          {[
-            {
-              icon: Bell,
-              label: "Email Notifications",
-              desc: "Receive alerts for appointments and claims updates",
-              defaultOn: true,
-            },
-            {
-              icon: Shield,
-              label: "Two-Factor Authentication",
-              desc: "Add an extra layer of security to your account",
-              defaultOn: false,
-            },
-            {
-              icon: Palette,
-              label: "AI Auto-Coding",
-              desc: "Automatically suggest ICD-10 and CPT codes during encounters",
-              defaultOn: true,
-            },
-            {
-              icon: Database,
-              label: "FHIR Data Sharing",
-              desc: "Enable interoperability with connected EHR systems",
-              defaultOn: true,
-            },
-          ].map((pref) => (
+          {toggles.map((pref) => (
             <div key={pref.label} className="flex items-center justify-between px-6 py-4">
               <div className="flex items-center gap-3">
                 <pref.icon className="w-4 h-4 text-[var(--medos-gray-400)]" />
@@ -138,15 +180,18 @@ export default function SettingsPage() {
                 </div>
               </div>
               <button
-                className={`relative w-10 h-6 rounded-full transition-default ${
-                  pref.defaultOn
+                role="switch"
+                aria-checked={pref.value}
+                onClick={pref.toggle}
+                className={`relative w-10 h-6 rounded-full transition-all ${
+                  pref.value
                     ? "bg-[var(--medos-primary)]"
                     : "bg-[var(--medos-gray-300)]"
                 }`}
               >
                 <span
-                  className={`absolute top-0.5 w-5 h-5 rounded-full bg-white shadow-sm transition-transform ${
-                    pref.defaultOn ? "left-[18px]" : "left-0.5"
+                  className={`absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow-sm transition-all ${
+                    pref.value ? "translate-x-4" : "translate-x-0"
                   }`}
                 />
               </button>
@@ -157,8 +202,18 @@ export default function SettingsPage() {
 
       {/* Save button */}
       <div className="flex justify-end">
-        <button className="px-6 py-2.5 rounded-lg bg-[var(--medos-primary)] text-white text-sm font-semibold hover:bg-[var(--medos-primary-hover)] transition-default">
-          Save Changes
+        <button
+          onClick={handleSave}
+          className="flex items-center gap-2 px-6 py-2.5 rounded-lg bg-[var(--medos-primary)] text-white text-sm font-semibold hover:bg-[var(--medos-primary-hover)] transition-all"
+        >
+          {saved ? (
+            <>
+              <Check className="w-4 h-4" />
+              Saved!
+            </>
+          ) : (
+            "Save Changes"
+          )}
         </button>
       </div>
     </div>

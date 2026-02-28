@@ -113,7 +113,7 @@ With the backend foundation solid, we built a complete clinical frontend — des
 
 Next.js 15 with App Router, TypeScript, and Tailwind CSS:
 - **Login page**: Professional split-screen design — MedOS branding + feature highlights on the left, authentication form on the right. Mock auth accepts any credentials for demo.
-- **Dashboard**: Personalized greeting ("Good morning, Dr. Direze"), 4 KPI stat cards with week-over-week trends, today's schedule (6 appointments with status badges), recent activity feed (AI notes, claims, alerts), revenue overview section
+- **Dashboard**: Personalized greeting ("Good morning, Dr. Justin"), 4 KPI stat cards with week-over-week trends, today's schedule (6 appointments with status badges), recent activity feed (AI notes, claims, alerts), revenue overview section
 - **Patient list**: Searchable, sortable table of 6 demo patients with avatars, MRN, insurance, risk scores (color-coded), and status badges
 - **Patient detail**: Full patient profile with clinical timeline and AI-generated SOAP note (confidence: 92%). Action buttons: Start Visit, New Note, Submit Claim
 - **Design system**: Custom CSS variables (MedOS brand colors), consistent spacing, hover/focus states, responsive from mobile to desktop

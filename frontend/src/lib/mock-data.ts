@@ -144,10 +144,10 @@ export interface MockAppointment {
 }
 
 export const MOCK_TODAYS_APPOINTMENTS: MockAppointment[] = [
-  { id: "a-001", patientName: "Robert Chen", patientId: "p-004", time: "09:00 AM", type: "Follow-up", status: "completed", provider: "Dr. Di Reze" },
-  { id: "a-002", patientName: "Maria Garcia", patientId: "p-001", time: "09:30 AM", type: "Lab Review", status: "completed", provider: "Dr. Di Reze" },
-  { id: "a-003", patientName: "William Torres", patientId: "p-006", time: "10:00 AM", type: "Cardiology Consult", status: "in-progress", provider: "Dr. Di Reze" },
-  { id: "a-004", patientName: "Ana Flores", patientId: "p-005", time: "11:00 AM", type: "New Patient", status: "confirmed", provider: "Dr. Di Reze" },
+  { id: "a-001", patientName: "Robert Chen", patientId: "p-004", time: "09:00 AM", type: "Follow-up", status: "completed", provider: "Dr. Justin" },
+  { id: "a-002", patientName: "Maria Garcia", patientId: "p-001", time: "09:30 AM", type: "Lab Review", status: "completed", provider: "Dr. Justin" },
+  { id: "a-003", patientName: "William Torres", patientId: "p-006", time: "10:00 AM", type: "Cardiology Consult", status: "in-progress", provider: "Dr. Justin" },
+  { id: "a-004", patientName: "Ana Flores", patientId: "p-005", time: "11:00 AM", type: "New Patient", status: "confirmed", provider: "Dr. Justin" },
   { id: "a-005", patientName: "James Rodriguez", patientId: "p-002", time: "02:00 PM", type: "Pulmonology", status: "pending", provider: "Dr. Patel" },
   { id: "a-006", patientName: "Sofia Martinez", patientId: "p-003", time: "03:30 PM", type: "Discharge Review", status: "pending", provider: "Dr. Patel" },
 ];

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Link from "next/link";
 import { useAuth } from "@/lib/auth-context";
 import {
   MOCK_DASHBOARD_STATS,
@@ -172,7 +173,7 @@ export default function DashboardPage() {
     });
   }, []);
 
-  const displayName = user?.name ?? "Dr. Di Reze";
+  const displayName = user?.name ?? "Dr. Justin";
   const today = new Date().toLocaleDateString("en-US", {
     weekday: "long",
     year: "numeric",
@@ -204,18 +205,18 @@ export default function DashboardPage() {
         </div>
 
         <div className="flex gap-2">
-          <button className="inline-flex items-center gap-1.5 rounded-lg bg-[#0066FF] px-4 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-[#0055DD]">
+          <Link href="/patients" className="inline-flex items-center gap-1.5 rounded-lg bg-[#0066FF] px-4 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-[#0055DD]">
             <PlayCircle className="h-4 w-4" />
             Start Visit
-          </button>
-          <button className="inline-flex items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-[#0F172A] shadow-sm transition hover:bg-gray-50">
+          </Link>
+          <Link href="/patients" className="inline-flex items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-[#0F172A] shadow-sm transition hover:bg-gray-50">
             <UserPlus className="h-4 w-4" />
             New Patient
-          </button>
-          <button className="inline-flex items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-[#0F172A] shadow-sm transition hover:bg-gray-50">
+          </Link>
+          <Link href="/ai-notes/new" className="inline-flex items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-[#0F172A] shadow-sm transition hover:bg-gray-50">
             <Mic className="h-4 w-4" />
             AI Scribe
-          </button>
+          </Link>
         </div>
       </div>
 
@@ -292,9 +293,9 @@ export default function DashboardPage() {
                         {appt.time}
                       </td>
                       <td className="py-3 pr-4">
-                        <button className="font-medium text-[#0066FF] transition hover:underline">
+                        <Link href={`/patients/${appt.patientId}`} className="font-medium text-[#0066FF] transition hover:underline">
                           {appt.patientName}
-                        </button>
+                        </Link>
                       </td>
                       <td className="hidden py-3 pr-4 text-gray-500 sm:table-cell">
                         {appt.type}
@@ -315,9 +316,9 @@ export default function DashboardPage() {
           <CardHeader>
             <div className="flex items-center justify-between">
               <CardTitle>Recent Activity</CardTitle>
-              <button className="text-xs font-medium text-[#0066FF] transition hover:underline">
+              <Link href="/ai-notes" className="text-xs font-medium text-[#0066FF] transition hover:underline">
                 View all
-              </button>
+              </Link>
             </div>
           </CardHeader>
           <CardContent>

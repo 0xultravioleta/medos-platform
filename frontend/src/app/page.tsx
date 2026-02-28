@@ -183,7 +183,7 @@ export default function LoginPage() {
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="you@clinic.com"
+                placeholder="justin@medos.ai"
                 autoComplete="email"
                 disabled={isLoading}
                 className="w-full h-11 px-3.5 rounded-lg border border-[var(--medos-gray-300)] bg-white text-sm text-[var(--medos-gray-900)] placeholder:text-[var(--medos-gray-400)] transition-default focus:outline-none focus:ring-2 focus:ring-[var(--medos-primary)] focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed"

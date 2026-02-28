@@ -100,7 +100,7 @@ const TIMELINE: TimelineEntry[] = [
   {
     date: "2026-02-28",
     description:
-      "Follow-up visit with Dr. Di Reze. AI-generated SOAP note.",
+      "Follow-up visit with Dr. Justin. AI-generated SOAP note.",
     icon: <Stethoscope className="h-4 w-4" />,
     type: "visit",
   },

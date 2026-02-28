@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { DollarSign, Send, AlertTriangle, CheckCircle2, Clock, Search, Filter } from "lucide-react";
+import { useState, useEffect, useMemo, useRef, Fragment } from "react";
+import { DollarSign, Send, AlertTriangle, CheckCircle2, Clock, Search, Filter, ChevronDown, Eye, RotateCcw, Radar } from "lucide-react";
 import { getClaims, type Claim } from "@/lib/api";
 
 const MOCK_CLAIMS: Claim[] = [
@@ -80,9 +80,187 @@ const STATUS_MAP: Record<string, { label: string; style: string; icon: typeof Ch
   },
 };
 
+const TIMELINE_STEPS = ["Created", "Submitted", "Processing", "Resolved"];
+
+function getTimelineState(status: string): number {
+  switch (status) {
+    case "submitted":
+      return 1;
+    case "pending":
+      return 2;
+    case "approved":
+    case "denied":
+      return 3;
+    default:
+      return 0;
+  }
+}
+
+function getResolvedLabel(status: string): string {
+  switch (status) {
+    case "approved":
+      return "Approved";
+    case "denied":
+      return "Denied";
+    case "pending":
+      return "Pending";
+    default:
+      return "Resolved";
+  }
+}
+
+function ClaimTimeline({ status }: { status: string }) {
+  const currentStep = getTimelineState(status);
+  const steps = TIMELINE_STEPS.map((s, i) =>
+    i === 3 ? getResolvedLabel(status) : s
+  );
+
+  return (
+    <div className="flex items-center gap-0">
+      {steps.map((step, i) => {
+        const isCompleted = i < currentStep;
+        const isCurrent = i === currentStep;
+        const isFuture = i > currentStep;
+
+        return (
+          <div key={step} className="flex items-center">
+            <div className="flex flex-col items-center">
+              <div
+                className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold ${
+                  isCompleted
+                    ? "bg-emerald-500 text-white"
+                    : isCurrent
+                    ? "bg-[var(--medos-primary)] text-white animate-pulse"
+                    : "bg-[var(--medos-gray-200)] text-[var(--medos-gray-400)]"
+                }`}
+              >
+                {isCompleted ? (
+                  <CheckCircle2 className="w-3.5 h-3.5" />
+                ) : (
+                  i + 1
+                )}
+              </div>
+              <span
+                className={`text-[10px] mt-1 whitespace-nowrap ${
+                  isFuture
+                    ? "text-[var(--medos-gray-400)]"
+                    : "text-[var(--medos-gray-600)] font-medium"
+                }`}
+              >
+                {step}
+              </span>
+            </div>
+            {i < steps.length - 1 && (
+              <div
+                className={`w-8 h-0.5 mx-1 mb-4 ${
+                  i < currentStep
+                    ? "bg-emerald-500"
+                    : "bg-[var(--medos-gray-200)]"
+                }`}
+              />
+            )}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+function ClaimActions({ status }: { status: string }) {
+  switch (status) {
+    case "denied":
+      return (
+        <div className="flex items-center gap-2">
+          <button className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[var(--medos-primary)] text-white text-xs font-semibold hover:bg-[var(--medos-primary-hover)] transition-default">
+            <RotateCcw className="w-3.5 h-3.5" />
+            Appeal
+          </button>
+          <button className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[var(--medos-gray-300)] text-xs font-medium text-[var(--medos-gray-700)] hover:bg-[var(--medos-gray-50)] transition-default">
+            <Eye className="w-3.5 h-3.5" />
+            View Denial Reason
+          </button>
+        </div>
+      );
+    case "pending":
+      return (
+        <button className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[var(--medos-gray-300)] text-xs font-medium text-[var(--medos-gray-700)] hover:bg-[var(--medos-gray-50)] transition-default">
+          <Clock className="w-3.5 h-3.5" />
+          Check Status
+        </button>
+      );
+    case "approved":
+      return (
+        <button className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[var(--medos-gray-300)] text-xs font-medium text-[var(--medos-gray-700)] hover:bg-[var(--medos-gray-50)] transition-default">
+          <Eye className="w-3.5 h-3.5" />
+          View EOB
+        </button>
+      );
+    case "submitted":
+      return (
+        <button className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[var(--medos-gray-300)] text-xs font-medium text-[var(--medos-gray-700)] hover:bg-[var(--medos-gray-50)] transition-default">
+          <Radar className="w-3.5 h-3.5" />
+          Track
+        </button>
+      );
+    default:
+      return null;
+  }
+}
+
+function ExpandableClaimRow({ claim, isExpanded }: { claim: Claim; isExpanded: boolean }) {
+  const contentRef = useRef<HTMLDivElement>(null);
+  const [maxHeight, setMaxHeight] = useState(0);
+
+  useEffect(() => {
+    if (contentRef.current) {
+      setMaxHeight(isExpanded ? contentRef.current.scrollHeight : 0);
+    }
+  }, [isExpanded]);
+
+  const billedAmount = claim.amount;
+  const allowedAmount = +(billedAmount * 0.82).toFixed(2);
+  const patientResp = +(billedAmount * 0.18).toFixed(2);
+
+  return (
+    <tr>
+      <td colSpan={7} className="p-0">
+        <div
+          className="overflow-hidden transition-all duration-300 ease-in-out"
+          style={{ maxHeight: isExpanded ? `${maxHeight}px` : "0px" }}
+        >
+          <div ref={contentRef}>
+            <div className="px-6 py-4 bg-[var(--medos-gray-50)] border-t border-[var(--medos-gray-100)]">
+              <div className="flex items-start justify-between gap-6">
+                <div>
+                  <p className="text-xs font-semibold text-[var(--medos-gray-500)] uppercase tracking-wider mb-3">
+                    Claim Timeline
+                  </p>
+                  <ClaimTimeline status={claim.status} />
+                </div>
+                <div className="flex flex-col items-end gap-3">
+                  <ClaimActions status={claim.status} />
+                  <p className="text-xs text-[var(--medos-gray-500)]">
+                    <span className="font-medium">Billed: ${billedAmount.toFixed(2)}</span>
+                    <span className="mx-1.5">|</span>
+                    <span className="font-medium">Allowed: ${allowedAmount.toFixed(2)}</span>
+                    <span className="mx-1.5">|</span>
+                    <span className="font-medium">Patient Resp: ${patientResp.toFixed(2)}</span>
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </td>
+    </tr>
+  );
+}
+
 export default function ClaimsPage() {
   const [claims, setClaims] = useState<Claim[]>(MOCK_CLAIMS);
   const [loading, setLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [expandedClaim, setExpandedClaim] = useState<string | null>(null);
 
   useEffect(() => {
     getClaims().then((apiData) => {
@@ -91,7 +269,20 @@ export default function ClaimsPage() {
     });
   }, []);
 
-  const totalRevenue = claims.filter((c) => c.status === "approved").reduce(
+  const filteredClaims = useMemo(() => {
+    const q = searchQuery.toLowerCase().trim();
+    if (!q) return claims;
+    return claims.filter(
+      (c) =>
+        c.id.toLowerCase().includes(q) ||
+        c.patient.toLowerCase().includes(q) ||
+        c.cpt.toLowerCase().includes(q) ||
+        c.icd10.toLowerCase().includes(q) ||
+        c.payer.toLowerCase().includes(q)
+    );
+  }, [claims, searchQuery]);
+
+  const totalRevenue = filteredClaims.filter((c) => c.status === "approved").reduce(
     (sum, c) => sum + c.amount,
     0
   );
@@ -159,6 +350,8 @@ export default function ClaimsPage() {
         <input
           type="text"
           placeholder="Search by claim ID, patient, or CPT code..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
           className="w-full h-10 pl-10 pr-4 rounded-lg border border-[var(--medos-gray-300)] bg-white text-sm placeholder:text-[var(--medos-gray-400)] focus:outline-none focus:ring-2 focus:ring-[var(--medos-primary)] focus:border-transparent"
         />
       </div>
@@ -192,46 +385,65 @@ export default function ClaimsPage() {
             </tr>
           </thead>
           <tbody className="divide-y divide-[var(--medos-gray-100)]">
-            {claims.map((claim) => {
+            {filteredClaims.map((claim) => {
               const statusInfo = STATUS_MAP[claim.status];
               const StatusIcon = statusInfo?.icon;
+              const isExpanded = expandedClaim === claim.id;
               return (
-                <tr
-                  key={claim.id}
-                  className="hover:bg-[var(--medos-gray-50)] transition-default cursor-pointer"
-                >
-                  <td className="px-6 py-4 text-sm font-mono font-medium text-[var(--medos-primary)]">
-                    {claim.id}
-                  </td>
-                  <td className="px-6 py-4 text-sm font-medium text-[var(--medos-gray-900)]">
-                    {claim.patient}
-                  </td>
-                  <td className="px-6 py-4">
-                    <p className="text-sm font-medium text-[var(--medos-gray-900)]">
-                      CPT: {claim.cpt}
-                    </p>
-                    <p className="text-xs text-[var(--medos-gray-500)]">
-                      {claim.icd10}
-                    </p>
-                  </td>
-                  <td className="px-6 py-4 text-sm text-[var(--medos-gray-600)]">
-                    {claim.payer}
-                  </td>
-                  <td className="px-6 py-4 text-sm font-semibold text-[var(--medos-gray-900)] text-right tabular-nums">
-                    ${claim.amount.toFixed(2)}
-                  </td>
-                  <td className="px-6 py-4">
-                    <span
-                      className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium ${statusInfo?.style || ""}`}
-                    >
-                      {StatusIcon && <StatusIcon className="w-3 h-3" />}
-                      {statusInfo?.label || claim.status}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 text-sm text-[var(--medos-gray-500)]">
-                    {claim.date}
-                  </td>
-                </tr>
+                <Fragment key={claim.id}>
+                  <tr
+                    className={`transition-default cursor-pointer ${
+                      isExpanded
+                        ? "bg-[var(--medos-primary-light)]"
+                        : "hover:bg-[var(--medos-gray-50)]"
+                    }`}
+                    onClick={() =>
+                      setExpandedClaim(isExpanded ? null : claim.id)
+                    }
+                  >
+                    <td className="px-6 py-4 text-sm font-mono font-medium text-[var(--medos-primary)]">
+                      {claim.id}
+                    </td>
+                    <td className="px-6 py-4 text-sm font-medium text-[var(--medos-gray-900)]">
+                      {claim.patient}
+                    </td>
+                    <td className="px-6 py-4">
+                      <p className="text-sm font-medium text-[var(--medos-gray-900)]">
+                        CPT: {claim.cpt}
+                      </p>
+                      <p className="text-xs text-[var(--medos-gray-500)]">
+                        {claim.icd10}
+                      </p>
+                    </td>
+                    <td className="px-6 py-4 text-sm text-[var(--medos-gray-600)]">
+                      {claim.payer}
+                    </td>
+                    <td className="px-6 py-4 text-sm font-semibold text-[var(--medos-gray-900)] text-right tabular-nums">
+                      ${claim.amount.toFixed(2)}
+                    </td>
+                    <td className="px-6 py-4">
+                      <span
+                        className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium ${statusInfo?.style || ""}`}
+                      >
+                        {StatusIcon && <StatusIcon className="w-3 h-3" />}
+                        {statusInfo?.label || claim.status}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm text-[var(--medos-gray-500)]">
+                          {claim.date}
+                        </span>
+                        <ChevronDown
+                          className={`w-4 h-4 text-[var(--medos-gray-400)] transition-transform duration-300 ${
+                            isExpanded ? "rotate-180" : ""
+                          }`}
+                        />
+                      </div>
+                    </td>
+                  </tr>
+                  <ExpandableClaimRow claim={claim} isExpanded={isExpanded} />
+                </Fragment>
               );
             })}
           </tbody>
