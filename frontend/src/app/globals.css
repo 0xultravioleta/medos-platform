@@ -1,0 +1,230 @@
+@import "tailwindcss";
+
+/* ============================================
+   MedOS Design System
+   Healthcare-grade professional UI
+   ============================================ */
+
+:root {
+  /* Primary palette */
+  --medos-primary: #0066FF;
+  --medos-primary-hover: #0052CC;
+  --medos-primary-light: #E6F0FF;
+  --medos-primary-50: #F0F7FF;
+
+  /* Accent */
+  --medos-accent: #0EA5E9;
+  --medos-accent-hover: #0284C7;
+  --medos-accent-light: #E0F2FE;
+
+  /* Neutrals */
+  --medos-navy: #0F172A;
+  --medos-navy-light: #1E293B;
+  --medos-gray-900: #111827;
+  --medos-gray-800: #1F2937;
+  --medos-gray-700: #374151;
+  --medos-gray-600: #4B5563;
+  --medos-gray-500: #6B7280;
+  --medos-gray-400: #9CA3AF;
+  --medos-gray-300: #D1D5DB;
+  --medos-gray-200: #E5E7EB;
+  --medos-gray-100: #F3F4F6;
+  --medos-gray-50: #F9FAFB;
+
+  /* Semantic */
+  --medos-success: #059669;
+  --medos-success-light: #ECFDF5;
+  --medos-warning: #D97706;
+  --medos-warning-light: #FFFBEB;
+  --medos-error: #DC2626;
+  --medos-error-light: #FEF2F2;
+
+  /* Surfaces */
+  --medos-bg: #FFFFFF;
+  --medos-bg-secondary: var(--medos-gray-50);
+  --medos-bg-tertiary: var(--medos-gray-100);
+  --medos-surface: #FFFFFF;
+  --medos-surface-elevated: #FFFFFF;
+  --medos-border: var(--medos-gray-200);
+  --medos-border-light: var(--medos-gray-100);
+
+  /* Text */
+  --medos-text-primary: var(--medos-gray-900);
+  --medos-text-secondary: var(--medos-gray-600);
+  --medos-text-tertiary: var(--medos-gray-400);
+  --medos-text-on-primary: #FFFFFF;
+
+  /* Sidebar */
+  --sidebar-width: 260px;
+  --sidebar-collapsed-width: 72px;
+  --topbar-height: 64px;
+
+  /* Shadows */
+  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.07), 0 2px 4px -2px rgb(0 0 0 / 0.05);
+  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.08), 0 4px 6px -4px rgb(0 0 0 / 0.04);
+  --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.08), 0 8px 10px -6px rgb(0 0 0 / 0.04);
+
+  /* Transitions */
+  --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-normal: 200ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-slow: 300ms cubic-bezier(0.4, 0, 0.2, 1);
+
+  /* Radius */
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+  --radius-full: 9999px;
+
+  /* Fonts */
+  --font-sans: var(--font-geist-sans), system-ui, -apple-system, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, monospace;
+
+  --background: #ffffff;
+  --foreground: #111827;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+
+  --color-medos-primary: var(--medos-primary);
+  --color-medos-primary-hover: var(--medos-primary-hover);
+  --color-medos-primary-light: var(--medos-primary-light);
+  --color-medos-primary-50: var(--medos-primary-50);
+  --color-medos-accent: var(--medos-accent);
+  --color-medos-accent-hover: var(--medos-accent-hover);
+  --color-medos-accent-light: var(--medos-accent-light);
+  --color-medos-navy: var(--medos-navy);
+  --color-medos-navy-light: var(--medos-navy-light);
+  --color-medos-gray-50: var(--medos-gray-50);
+  --color-medos-gray-100: var(--medos-gray-100);
+  --color-medos-gray-200: var(--medos-gray-200);
+  --color-medos-gray-300: var(--medos-gray-300);
+  --color-medos-gray-400: var(--medos-gray-400);
+  --color-medos-gray-500: var(--medos-gray-500);
+  --color-medos-gray-600: var(--medos-gray-600);
+  --color-medos-gray-700: var(--medos-gray-700);
+  --color-medos-gray-800: var(--medos-gray-800);
+  --color-medos-gray-900: var(--medos-gray-900);
+  --color-medos-success: var(--medos-success);
+  --color-medos-warning: var(--medos-warning);
+  --color-medos-error: var(--medos-error);
+}
+
+/* ============================================
+   Base styles
+   ============================================ */
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  background: var(--medos-bg);
+  color: var(--medos-text-primary);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Focus ring for accessibility */
+*:focus-visible {
+  outline: 2px solid var(--medos-primary);
+  outline-offset: 2px;
+  border-radius: var(--radius-sm);
+}
+
+/* Smooth scrolling */
+html {
+  scroll-behavior: smooth;
+}
+
+/* ============================================
+   Custom utility layers
+   ============================================ */
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+
+  .transition-default {
+    transition-property: color, background-color, border-color, box-shadow, opacity, transform;
+    transition-duration: var(--transition-normal);
+    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .transition-fast {
+    transition-property: color, background-color, border-color, box-shadow, opacity, transform;
+    transition-duration: var(--transition-fast);
+    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .shadow-medos-sm {
+    box-shadow: var(--shadow-sm);
+  }
+
+  .shadow-medos-md {
+    box-shadow: var(--shadow-md);
+  }
+
+  .shadow-medos-lg {
+    box-shadow: var(--shadow-lg);
+  }
+
+  .shadow-medos-xl {
+    box-shadow: var(--shadow-xl);
+  }
+
+  .gradient-primary {
+    background: linear-gradient(135deg, var(--medos-primary), var(--medos-accent));
+  }
+
+  .gradient-navy {
+    background: linear-gradient(135deg, var(--medos-navy), var(--medos-navy-light));
+  }
+
+  .gradient-subtle {
+    background: linear-gradient(135deg, var(--medos-gray-50), var(--medos-primary-50));
+  }
+}
+
+/* ============================================
+   Scrollbar styling
+   ============================================ */
+
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--medos-gray-300);
+  border-radius: var(--radius-full);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--medos-gray-400);
+}
+
+/* ============================================
+   Loading spinner animation
+   ============================================ */
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.animate-spin-slow {
+  animation: spin 1.2s linear infinite;
+}
