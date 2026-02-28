@@ -1,8 +1,11 @@
 "use client";
 
+import { useState, useEffect } from "react";
+import Link from "next/link";
 import { FileText, Sparkles, Mic, Search } from "lucide-react";
+import { getAINotes, type Note } from "@/lib/api";
 
-const MOCK_NOTES = [
+const MOCK_NOTES: Note[] = [
   {
     id: "n-001",
     patient: "Robert Chen",
@@ -71,6 +74,24 @@ const STATUS_MAP: Record<string, { label: string; style: string }> = {
 };
 
 export default function AiNotesPage() {
+  const [notes, setNotes] = useState<Note[]>(MOCK_NOTES);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    getAINotes().then((apiData) => {
+      if (apiData) setNotes(apiData);
+      setLoading(false);
+    });
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="w-8 h-8 border-4 border-[var(--medos-gray-200)] border-t-[var(--medos-primary)] rounded-full animate-spin" />
+      </div>
+    );
+  }
+
   return (
     <div className="p-6 lg:p-8 max-w-7xl mx-auto space-y-6">
       {/* Header */}
@@ -89,10 +110,13 @@ export default function AiNotesPage() {
           </div>
         </div>
         <div className="flex items-center gap-2">
-          <button className="flex items-center gap-2 px-4 py-2 rounded-lg bg-[var(--medos-primary)] text-white text-sm font-semibold hover:bg-[var(--medos-primary-hover)] transition-default">
+          <Link
+            href="/ai-notes/new"
+            className="flex items-center gap-2 px-4 py-2 rounded-lg bg-[var(--medos-primary)] text-white text-sm font-semibold hover:bg-[var(--medos-primary-hover)] transition-default"
+          >
             <Mic className="w-4 h-4" />
             Start AI Scribe
-          </button>
+          </Link>
         </div>
       </div>
 
@@ -147,7 +171,7 @@ export default function AiNotesPage() {
 
       {/* Notes list */}
       <div className="space-y-3">
-        {MOCK_NOTES.map((note) => {
+        {notes.map((note) => {
           const statusInfo = STATUS_MAP[note.status];
           return (
             <div

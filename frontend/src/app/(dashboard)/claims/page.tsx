@@ -1,8 +1,10 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import { DollarSign, Send, AlertTriangle, CheckCircle2, Clock, Search, Filter } from "lucide-react";
+import { getClaims, type Claim } from "@/lib/api";
 
-const MOCK_CLAIMS = [
+const MOCK_CLAIMS: Claim[] = [
   {
     id: "CLM-2026-0847",
     patient: "Maria Garcia",
@@ -79,10 +81,28 @@ const STATUS_MAP: Record<string, { label: string; style: string; icon: typeof Ch
 };
 
 export default function ClaimsPage() {
-  const totalRevenue = MOCK_CLAIMS.filter((c) => c.status === "approved").reduce(
+  const [claims, setClaims] = useState<Claim[]>(MOCK_CLAIMS);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    getClaims().then((apiData) => {
+      if (apiData) setClaims(apiData);
+      setLoading(false);
+    });
+  }, []);
+
+  const totalRevenue = claims.filter((c) => c.status === "approved").reduce(
     (sum, c) => sum + c.amount,
     0
   );
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="w-8 h-8 border-4 border-[var(--medos-gray-200)] border-t-[var(--medos-primary)] rounded-full animate-spin" />
+      </div>
+    );
+  }
 
   return (
     <div className="p-6 lg:p-8 max-w-7xl mx-auto space-y-6">
@@ -172,7 +192,7 @@ export default function ClaimsPage() {
             </tr>
           </thead>
           <tbody className="divide-y divide-[var(--medos-gray-100)]">
-            {MOCK_CLAIMS.map((claim) => {
+            {claims.map((claim) => {
               const statusInfo = STATUS_MAP[claim.status];
               const StatusIcon = statusInfo?.icon;
               return (

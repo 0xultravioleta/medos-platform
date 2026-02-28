@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import {
   Search,
@@ -9,6 +9,7 @@ import {
   Users,
 } from "lucide-react";
 import { MOCK_PATIENTS, type MockPatient } from "@/lib/mock-data";
+import { getPatients } from "@/lib/api";
 import { cn } from "@/lib/utils";
 
 type SortField = "name" | "mrn" | "birthDate" | "lastVisit" | "riskScore";
@@ -57,16 +58,25 @@ function formatDate(dateStr: string): string {
 
 export default function PatientsPage() {
   const router = useRouter();
+  const [patients, setPatients] = useState<MockPatient[]>(MOCK_PATIENTS);
+  const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [sortField, setSortField] = useState<SortField>("name");
   const [sortDirection, setSortDirection] = useState<SortDirection>("asc");
 
+  useEffect(() => {
+    getPatients().then((apiData) => {
+      if (apiData) setPatients(apiData);
+      setLoading(false);
+    });
+  }, []);
+
   const filteredAndSorted = useMemo(() => {
     const q = searchQuery.toLowerCase().trim();
 
-    let filtered = MOCK_PATIENTS;
+    let filtered = patients;
     if (q) {
-      filtered = MOCK_PATIENTS.filter(
+      filtered = patients.filter(
         (p) =>
           p.name.toLowerCase().includes(q) ||
           p.mrn.toLowerCase().includes(q) ||
@@ -95,7 +105,7 @@ export default function PatientsPage() {
       }
       return sortDirection === "asc" ? cmp : -cmp;
     });
-  }, [searchQuery, sortField, sortDirection]);
+  }, [patients, searchQuery, sortField, sortDirection]);
 
   function handleSort(field: SortField) {
     if (sortField === field) {
@@ -137,6 +147,14 @@ export default function PatientsPage() {
     );
   }
 
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="w-8 h-8 border-4 border-[var(--medos-gray-200)] border-t-[var(--medos-primary)] rounded-full animate-spin" />
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -150,7 +168,7 @@ export default function PatientsPage() {
               Patients
             </h1>
             <p className="text-sm text-[var(--medos-gray-500)]">
-              {filteredAndSorted.length} of {MOCK_PATIENTS.length} patients
+              {filteredAndSorted.length} of {patients.length} patients
             </p>
           </div>
         </div>

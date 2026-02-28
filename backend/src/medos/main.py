@@ -8,7 +8,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from medos.config import settings
 from medos.config.logging import get_logger, setup_logging
 from medos.middleware.request_logging import RequestLoggingMiddleware
-from medos.routers import fhir_patient, health
+from medos.routers import fhir_patient, health, mock_api
 
 logger = get_logger(__name__)
 
@@ -55,6 +55,7 @@ def create_app() -> FastAPI:
     # Routers
     app.include_router(health.router, tags=["Health"])
     app.include_router(fhir_patient.router, prefix="/fhir/r4", tags=["FHIR Patient"])
+    app.include_router(mock_api.router, prefix="/api/v1", tags=["Mock API"])
 
     # Dev-only routes (token generation, etc.) -- never in production
     if settings.app_env == "development" and settings.app_debug:

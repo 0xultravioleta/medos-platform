@@ -1,12 +1,22 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import { useAuth } from "@/lib/auth-context";
 import {
   MOCK_DASHBOARD_STATS,
   MOCK_TODAYS_APPOINTMENTS,
   MOCK_RECENT_ACTIVITY,
 } from "@/lib/mock-data";
-import type { MockAppointment, MockRecentActivity } from "@/lib/mock-data";
+import type {
+  MockAppointment,
+  MockRecentActivity,
+  MockDashboardStats,
+} from "@/lib/mock-data";
+import {
+  getDashboardStats,
+  getTodayAppointments,
+  getRecentActivity,
+} from "@/lib/api";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -93,47 +103,49 @@ function getActivityIcon(type: MockRecentActivity["type"]) {
 }
 
 // ---------------------------------------------------------------------------
-// Stat card data
+// Stat card builder
 // ---------------------------------------------------------------------------
 
-const statsCards = [
-  {
-    label: "Patients Today",
-    value: MOCK_DASHBOARD_STATS.appointmentsToday,
-    change: "+12%",
-    trend: "up" as const,
-    icon: Calendar,
-    iconBg: "bg-blue-50",
-    iconColor: "text-[#0066FF]",
-  },
-  {
-    label: "Pending Claims",
-    value: `$${MOCK_DASHBOARD_STATS.pendingClaims}`,
-    change: "-5%",
-    trend: "down" as const,
-    icon: DollarSign,
-    iconBg: "bg-emerald-50",
-    iconColor: "text-emerald-600",
-  },
-  {
-    label: "Prior Auths",
-    value: `${MOCK_DASHBOARD_STATS.pendingPriorAuths} pending`,
-    change: "+3%",
-    trend: "up" as const,
-    icon: Clock,
-    iconBg: "bg-amber-50",
-    iconColor: "text-amber-600",
-  },
-  {
-    label: "AI Notes Today",
-    value: MOCK_DASHBOARD_STATS.aiNotesGenerated,
-    change: "+28%",
-    trend: "up" as const,
-    icon: Sparkles,
-    iconBg: "bg-purple-50",
-    iconColor: "text-purple-600",
-  },
-];
+function buildStatsCards(stats: MockDashboardStats) {
+  return [
+    {
+      label: "Patients Today",
+      value: stats.appointmentsToday,
+      change: "+12%",
+      trend: "up" as const,
+      icon: Calendar,
+      iconBg: "bg-blue-50",
+      iconColor: "text-[#0066FF]",
+    },
+    {
+      label: "Pending Claims",
+      value: `$${stats.pendingClaims}`,
+      change: "-5%",
+      trend: "down" as const,
+      icon: DollarSign,
+      iconBg: "bg-emerald-50",
+      iconColor: "text-emerald-600",
+    },
+    {
+      label: "Prior Auths",
+      value: `${stats.pendingPriorAuths} pending`,
+      change: "+3%",
+      trend: "up" as const,
+      icon: Clock,
+      iconBg: "bg-amber-50",
+      iconColor: "text-amber-600",
+    },
+    {
+      label: "AI Notes Today",
+      value: stats.aiNotesGenerated,
+      change: "+28%",
+      trend: "up" as const,
+      icon: Sparkles,
+      iconBg: "bg-purple-50",
+      iconColor: "text-purple-600",
+    },
+  ];
+}
 
 // ---------------------------------------------------------------------------
 // Component
@@ -142,6 +154,24 @@ const statsCards = [
 export default function DashboardPage() {
   const { user } = useAuth();
 
+  const [stats, setStats] = useState<MockDashboardStats>(MOCK_DASHBOARD_STATS);
+  const [appointments, setAppointments] = useState<MockAppointment[]>(MOCK_TODAYS_APPOINTMENTS);
+  const [activity, setActivity] = useState<MockRecentActivity[]>(MOCK_RECENT_ACTIVITY);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    Promise.all([
+      getDashboardStats(),
+      getTodayAppointments(),
+      getRecentActivity(),
+    ]).then(([apiStats, apiAppts, apiActivity]) => {
+      if (apiStats) setStats(apiStats);
+      if (apiAppts) setAppointments(apiAppts);
+      if (apiActivity) setActivity(apiActivity);
+      setLoading(false);
+    });
+  }, []);
+
   const displayName = user?.name ?? "Dr. Di Reze";
   const today = new Date().toLocaleDateString("en-US", {
     weekday: "long",
@@ -149,6 +179,16 @@ export default function DashboardPage() {
     month: "long",
     day: "numeric",
   });
+
+  const statsCards = buildStatsCards(stats);
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="w-8 h-8 border-4 border-[var(--medos-gray-200)] border-t-[var(--medos-primary)] rounded-full animate-spin" />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -228,7 +268,7 @@ export default function DashboardPage() {
             <div className="flex items-center justify-between">
               <CardTitle>Today&apos;s Schedule</CardTitle>
               <span className="text-xs text-gray-400">
-                {MOCK_TODAYS_APPOINTMENTS.length} appointments
+                {appointments.length} appointments
               </span>
             </div>
           </CardHeader>
@@ -246,7 +286,7 @@ export default function DashboardPage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-50">
-                  {MOCK_TODAYS_APPOINTMENTS.map((appt) => (
+                  {appointments.map((appt) => (
                     <tr key={appt.id} className="group">
                       <td className="whitespace-nowrap py-3 pr-4 font-mono text-xs text-gray-500">
                         {appt.time}
@@ -282,7 +322,7 @@ export default function DashboardPage() {
           </CardHeader>
           <CardContent>
             <ul className="space-y-4">
-              {MOCK_RECENT_ACTIVITY.map((item) => (
+              {activity.map((item) => (
                 <li key={item.id} className="flex gap-3">
                   {getActivityIcon(item.type)}
                   <div className="min-w-0 flex-1">
@@ -319,7 +359,7 @@ export default function DashboardPage() {
               </div>
               <div>
                 <p className="text-2xl font-bold text-[#0F172A]">
-                  {formatCurrency(MOCK_DASHBOARD_STATS.revenueThisMonth)}
+                  {formatCurrency(stats.revenueThisMonth)}
                 </p>
                 <p className="text-sm text-gray-500">Revenue this month</p>
               </div>
@@ -333,7 +373,7 @@ export default function DashboardPage() {
               </div>
               <div>
                 <p className="text-2xl font-bold text-[#0F172A]">
-                  {MOCK_DASHBOARD_STATS.claimDenialRate}%
+                  {stats.claimDenialRate}%
                 </p>
                 <p className="text-sm text-gray-500">Denial rate</p>
               </div>
@@ -347,7 +387,7 @@ export default function DashboardPage() {
               </div>
               <div>
                 <p className="text-2xl font-bold text-[#0F172A]">
-                  {MOCK_DASHBOARD_STATS.avgWaitTime} min
+                  {stats.avgWaitTime} min
                 </p>
                 <p className="text-sm text-gray-500">Avg wait time</p>
               </div>

@@ -1,6 +1,6 @@
 "use client";
 
-import { use } from "react";
+import { use, useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import {
   ArrowLeft,
@@ -25,6 +25,7 @@ import {
   Heart,
 } from "lucide-react";
 import { MOCK_PATIENTS, type MockPatient } from "@/lib/mock-data";
+import { getPatient } from "@/lib/api";
 import { cn } from "@/lib/utils";
 
 /* ------------------------------------------------------------------ */
@@ -159,7 +160,24 @@ export default function PatientDetailPage({
   const { id } = use(params);
   const router = useRouter();
 
-  const patient = MOCK_PATIENTS.find((p) => p.id === id);
+  const mockPatient = MOCK_PATIENTS.find((p) => p.id === id) ?? null;
+  const [patient, setPatient] = useState<MockPatient | null>(mockPatient);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    getPatient(id).then((apiData) => {
+      if (apiData) setPatient(apiData);
+      setLoading(false);
+    });
+  }, [id]);
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="w-8 h-8 border-4 border-[var(--medos-gray-200)] border-t-[var(--medos-primary)] rounded-full animate-spin" />
+      </div>
+    );
+  }
 
   /* ---- Not found ---- */
   if (!patient) {
