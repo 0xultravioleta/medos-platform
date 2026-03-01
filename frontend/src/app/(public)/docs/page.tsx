@@ -9,10 +9,14 @@ const SYSTEM_ARCHITECTURE = `graph TB
     Gateway --> Scribe[Scribe MCP Server<br/>6 tools]
     Gateway --> Billing[Billing MCP Server<br/>8 tools]
     Gateway --> Schedule[Scheduling MCP Server<br/>6 tools]
+    Gateway --> Device[Device MCP Server<br/>6 tools]
+    Gateway --> Context[Context MCP Server<br/>6 tools]
     API --> Agents[LangGraph Agents]
     Agents --> ClinicalScribe[Clinical Scribe]
     Agents --> PriorAuth[Prior Auth]
     Agents --> DenialMgmt[Denial Management]
+    API --> A2A[A2A Protocol]
+    A2A --> ExternalAgents[External Agents]
     API --> DB[(PostgreSQL<br/>FHIR JSONB)]
     API --> Redis[(Redis Cache)]
 
@@ -20,6 +24,7 @@ const SYSTEM_ARCHITECTURE = `graph TB
     style API fill:#F0FDF4,stroke:#16A34A,color:#0F172A
     style Gateway fill:#FFF7ED,stroke:#EA580C,color:#0F172A
     style Agents fill:#FAF5FF,stroke:#9333EA,color:#0F172A
+    style A2A fill:#FDF2F8,stroke:#EC4899,color:#0F172A
     style DB fill:#F1F5F9,stroke:#475569,color:#0F172A
     style Redis fill:#FEF2F2,stroke:#DC2626,color:#0F172A`;
 
@@ -40,7 +45,7 @@ const QUICK_LINKS = [
   },
   {
     title: "MCP Protocol",
-    description: "Model Context Protocol implementation with 32 tools across 4 MCP servers and A2A agent cards.",
+    description: "Model Context Protocol implementation with 44 tools across 6 MCP servers, A2A protocol for agent-to-agent communication.",
     href: "/docs/mcp",
     icon: Network,
     color: "bg-amber-50 text-amber-600",
@@ -65,7 +70,7 @@ export default function DocsOverviewPage() {
         <p className="mt-2 text-[var(--medos-gray-600)] max-w-2xl leading-relaxed">
           Complete technical reference for MedOS Healthcare OS -- the AI-native
           operating system for mid-size specialty practices. Built with FastAPI,
-          Next.js 15, FHIR R4, and LangGraph agents.
+          Next.js 15, FHIR R4, and 10 LangGraph agents.
         </p>
         <div className="mt-4 flex flex-wrap gap-2">
           <span className="inline-flex items-center rounded-full bg-blue-50 px-3 py-1 text-xs font-medium text-blue-700">

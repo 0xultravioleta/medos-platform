@@ -132,7 +132,7 @@ export default function McpProtocolPage() {
         </h1>
         <p className="mt-2 text-[var(--medos-gray-600)] max-w-2xl">
           MedOS implements the Model Context Protocol (MCP) for structured
-          agent-to-tool communication. All 32 tools are registered through a
+          agent-to-tool communication. All 44 tools are registered through a
           central MCP Gateway that enforces authentication, PHI access
           policies, and audit logging.
         </p>
@@ -158,7 +158,7 @@ export default function McpProtocolPage() {
             Tool Reference
           </h2>
           <p className="text-sm text-[var(--medos-gray-500)]">
-            32 tools across 4 MCP servers
+            44 tools across 6 MCP servers
           </p>
         </div>
 
