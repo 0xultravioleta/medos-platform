@@ -95,7 +95,7 @@ export default function LoginPage() {
           <div className="absolute top-1/2 left-1/2 w-[300px] h-[300px] rounded-full bg-[var(--medos-primary)] opacity-[0.03] -translate-x-1/2 -translate-y-1/2" />
         </div>
 
-        <div className="relative z-10 flex flex-col justify-between p-12 xl:p-16 w-full">
+        <div className="relative z-10 flex flex-col justify-between p-10 xl:p-12 w-full">
           {/* Logo */}
           <div className="flex items-center gap-3">
             <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-[var(--medos-primary)] text-white font-bold text-lg">
@@ -111,22 +111,22 @@ export default function LoginPage() {
                 AI-Native Healthcare OS
               </span>
             </div>
-            <h1 className="text-4xl xl:text-5xl font-bold leading-tight tracking-tight mb-4">
+            <h1 className="text-3xl xl:text-4xl font-bold leading-tight tracking-tight mb-3">
               The operating system
               <br />
               for modern healthcare
             </h1>
-            <p className="text-lg text-gray-400 leading-relaxed mb-10">
+            <p className="text-base text-gray-400 leading-relaxed mb-8">
               Unify clinical workflows, revenue cycle management, and patient engagement in one intelligent platform.
             </p>
 
             {/* Stats bar */}
-            <div className="flex flex-wrap gap-4 mb-10 text-sm">
+            <div className="flex flex-wrap gap-3 mb-8 text-sm">
               {["53 Routes", "44 MCP Tools", "10 AI Agents", "21 States"].map(
                 (stat) => (
                   <span
                     key={stat}
-                    className="inline-flex items-center px-3 py-1 rounded-full bg-white/10 text-gray-300 text-xs font-medium border border-white/10"
+                    className="inline-flex items-center px-2.5 py-0.5 rounded-full bg-white/10 text-gray-300 text-xs font-medium border border-white/10"
                   >
                     {stat}
                   </span>
@@ -135,26 +135,26 @@ export default function LoginPage() {
             </div>
 
             {/* Features */}
-            <div className="space-y-5">
+            <div className="space-y-4">
               {FEATURES.map((feature) => (
-                <div key={feature.title} className="flex gap-4 items-start group">
-                  <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-white/[0.06] border border-white/[0.08] flex items-center justify-center transition-default group-hover:bg-[var(--medos-primary)]/20 group-hover:border-[var(--medos-primary)]/30">
-                    <feature.icon className="w-5 h-5 text-[var(--medos-accent)]" />
+                <div key={feature.title} className="flex gap-3 items-start group">
+                  <div className="flex-shrink-0 w-9 h-9 rounded-lg bg-white/[0.06] border border-white/[0.08] flex items-center justify-center transition-default group-hover:bg-[var(--medos-primary)]/20 group-hover:border-[var(--medos-primary)]/30">
+                    <feature.icon className="w-4 h-4 text-[var(--medos-accent)]" />
                   </div>
                   <div>
                     <h3 className="text-sm font-semibold text-white mb-0.5">{feature.title}</h3>
-                    <p className="text-sm text-gray-500 leading-relaxed">{feature.description}</p>
+                    <p className="text-xs text-gray-500 leading-relaxed">{feature.description}</p>
                   </div>
                 </div>
               ))}
             </div>
 
             {/* Bring Your Agent */}
-            <div className="mt-12 rounded-xl border border-white/10 bg-white/[0.04] backdrop-blur-sm p-6">
-              <h3 className="text-lg font-semibold text-white mb-2">
+            <div className="mt-8 rounded-xl border border-white/10 bg-white/[0.04] backdrop-blur-sm p-5">
+              <h3 className="text-base font-semibold text-white mb-1.5">
                 Bring Your Agent
               </h3>
-              <p className="text-sm text-gray-400 leading-relaxed mb-4">
+              <p className="text-xs text-gray-400 leading-relaxed mb-3">
                 MedOS exposes 44 MCP tools and A2A endpoints. Connect your autonomous
                 agent to clinical workflows, billing pipelines, and patient data.
               </p>
@@ -171,17 +171,20 @@ export default function LoginPage() {
           </div>
 
           {/* Footer */}
-          <div className="text-xs text-gray-600">
+          <div className="text-xs text-gray-500">
             HIPAA Compliant &middot; SOC 2 Type II &middot; HITRUST Certified
           </div>
         </div>
       </div>
 
       {/* Right panel - Login form */}
-      <div className="flex-1 flex items-center justify-center px-6 py-12 bg-[var(--medos-gray-50)]">
-        <div className="w-full max-w-[400px]">
+      <div className="flex-1 flex flex-col items-center justify-center px-6 py-10 bg-[var(--medos-gray-50)] relative">
+        {/* Subtle accent gradient line at top */}
+        <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-[var(--medos-primary)] via-[var(--medos-accent)] to-transparent" />
+
+        <div className="w-full max-w-[380px]">
           {/* Mobile logo */}
-          <div className="lg:hidden flex items-center gap-3 mb-10">
+          <div className="lg:hidden flex items-center gap-3 mb-8">
             <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-[var(--medos-primary)] text-white font-bold text-lg">
               M
             </div>
@@ -189,15 +192,15 @@ export default function LoginPage() {
           </div>
 
           <div>
-            <h2 className="text-2xl font-bold text-[var(--medos-navy)] mb-1">
+            <h2 className="text-xl font-bold text-[var(--medos-navy)] mb-1">
               Welcome back
             </h2>
-            <p className="text-sm text-[var(--medos-gray-500)] mb-8">
+            <p className="text-sm text-[var(--medos-gray-500)] mb-6">
               Sign in to access your healthcare platform
             </p>
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-5">
+          <form onSubmit={handleSubmit} className="space-y-4">
             {/* Error message */}
             {error && (
               <div className="flex items-center gap-2 px-4 py-3 rounded-lg bg-[var(--medos-error-light)] border border-red-200 text-sm text-[var(--medos-error)]">
@@ -224,7 +227,7 @@ export default function LoginPage() {
                 placeholder="justin@medos.ai"
                 autoComplete="email"
                 disabled={isLoading}
-                className="w-full h-11 px-3.5 rounded-lg border border-[var(--medos-gray-300)] bg-white text-sm text-[var(--medos-gray-900)] placeholder:text-[var(--medos-gray-400)] transition-default focus:outline-none focus:ring-2 focus:ring-[var(--medos-primary)] focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full h-10 px-3.5 rounded-lg border border-[var(--medos-gray-300)] bg-white text-sm text-[var(--medos-gray-900)] placeholder:text-[var(--medos-gray-400)] transition-default focus:outline-none focus:ring-2 focus:ring-[var(--medos-primary)] focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed"
               />
             </div>
 
@@ -253,7 +256,7 @@ export default function LoginPage() {
                   placeholder="Enter your password"
                   autoComplete="current-password"
                   disabled={isLoading}
-                  className="w-full h-11 px-3.5 pr-10 rounded-lg border border-[var(--medos-gray-300)] bg-white text-sm text-[var(--medos-gray-900)] placeholder:text-[var(--medos-gray-400)] transition-default focus:outline-none focus:ring-2 focus:ring-[var(--medos-primary)] focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="w-full h-10 px-3.5 pr-10 rounded-lg border border-[var(--medos-gray-300)] bg-white text-sm text-[var(--medos-gray-900)] placeholder:text-[var(--medos-gray-400)] transition-default focus:outline-none focus:ring-2 focus:ring-[var(--medos-primary)] focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed"
                 />
                 <button
                   type="button"
@@ -274,7 +277,7 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full h-11 flex items-center justify-center gap-2 rounded-lg bg-[var(--medos-primary)] text-white text-sm font-semibold transition-default hover:bg-[var(--medos-primary-hover)] focus:outline-none focus:ring-2 focus:ring-[var(--medos-primary)] focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed active:scale-[0.98]"
+              className="w-full h-10 flex items-center justify-center gap-2 rounded-lg bg-[var(--medos-primary)] text-white text-sm font-semibold transition-default hover:bg-[var(--medos-primary-hover)] focus:outline-none focus:ring-2 focus:ring-[var(--medos-primary)] focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed active:scale-[0.98]"
             >
               {isLoading ? (
                 <>
@@ -288,7 +291,7 @@ export default function LoginPage() {
           </form>
 
           {/* Divider */}
-          <div className="mt-8 pt-6 border-t border-[var(--medos-gray-200)]">
+          <div className="mt-6 pt-5 border-t border-[var(--medos-gray-200)]">
             <p className="text-xs text-center text-[var(--medos-gray-400)]">
               Protected by enterprise-grade encryption.
               <br />
