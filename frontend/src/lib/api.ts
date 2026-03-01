@@ -122,6 +122,42 @@ export async function getApprovalDetail(taskId: string) {
   return fetchAPI<ApprovalDetail>(`/api/v1/approvals/${taskId}`);
 }
 
+// -- Claims Analytics API (Sprint 4 backend) --------------------------------
+
+export interface ClaimsAnalytics {
+  summary: {
+    total_claims: number;
+    clean_claim_rate: number;
+    denial_rate: number;
+    collection_rate: number;
+  };
+  financial: {
+    total_billed: number;
+    total_collected: number;
+    total_denied: number;
+    outstanding_ar: number;
+  };
+  status_breakdown: Record<string, number>;
+  denial_by_code: Record<string, number>;
+  ar_aging: Record<string, number>;
+  top_denial_reasons: Array<{
+    code: string;
+    reason: string;
+    common_fix: string;
+    count: number;
+    appeal_success_rate: number;
+  }>;
+  kpis: {
+    avg_days_to_payment: number;
+    first_pass_resolution_rate: number;
+    claims_per_provider_per_day: number;
+  };
+}
+
+export async function getClaimsAnalytics() {
+  return fetchAPI<ClaimsAnalytics>("/api/v1/billing/analytics");
+}
+
 // -- Agent runner API (Sprint 3 backend) ------------------------------------
 
 export interface AgentRunResult {
