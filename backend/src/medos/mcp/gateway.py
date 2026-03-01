@@ -30,6 +30,7 @@ PHI_POLICIES: dict[AgentType, set[str]] = {
     AgentType.SCHEDULING: {"limited", "none"},  # appointment + patient contact info
     AgentType.PATIENT_COMMS: {"none", "limited"},  # name + contact + appointments
     AgentType.QUALITY_REPORTING: {"none"},  # aggregated/de-identified only
+    AgentType.DEVICE_BRIDGE: {"limited", "none"},  # device readings + patient context
     AgentType.SYSTEM: {"full", "limited", "none"},
 }
 

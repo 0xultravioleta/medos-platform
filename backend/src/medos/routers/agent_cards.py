@@ -125,6 +125,17 @@ async def agent_card() -> JSONResponse:
                 "inputModes": ["application/json"],
                 "outputModes": ["application/json"],
             },
+            {
+                "id": "device-bridge",
+                "name": "Device/Wearable Integration",
+                "description": (
+                    "Register and manage wearable/IoT devices, ingest health readings, "
+                    "retrieve metric summaries, and monitor alert thresholds"
+                ),
+                "tags": ["devices", "wearables", "iot", "rpm"],
+                "inputModes": ["application/json"],
+                "outputModes": ["application/json"],
+            },
         ],
         "compliance": {
             "hipaa": True,

@@ -27,6 +27,7 @@ class AgentType(str, Enum):
     SCHEDULING = "scheduling"
     PATIENT_COMMS = "patient_comms"
     QUALITY_REPORTING = "quality_reporting"
+    DEVICE_BRIDGE = "device_bridge"
     SYSTEM = "system"  # internal platform operations
 
 

@@ -74,6 +74,7 @@ PHI_POLICIES: dict[AgentType, set[str]] = {
     AgentType.SCHEDULING: {"limited", "none"},
     AgentType.PATIENT_COMMS: {"none", "limited"},
     AgentType.QUALITY_REPORTING: {"none"},
+    AgentType.DEVICE_BRIDGE: {"limited", "none"},
     AgentType.SYSTEM: {"full", "limited", "none"},
 }
 

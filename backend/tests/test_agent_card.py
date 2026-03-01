@@ -18,7 +18,7 @@ def test_agent_card_endpoint():
     data = response.json()
     assert data["name"] == "MedOS Healthcare OS"
     assert "skills" in data
-    assert len(data["skills"]) == 7  # 4 original + 3 new Sprint 2 skills
+    assert len(data["skills"]) == 8  # 4 original + 3 Sprint 2 + 1 device-bridge
 
 
 def test_agent_card_has_fhir_skill():
