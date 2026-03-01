@@ -793,9 +793,53 @@ test('MedOS Full Product Demo', async ({ page }) => {
   }
 
   // ============================================================
-  // ACT 12: GRAND FINALE — BACK TO DASHBOARD
+  // ACT 12: PROJECT TRACKER (Sidebar #11)
   // ============================================================
-  chapterMarker('ACT 12', 'Grand Finale');
+  chapterMarker('ACT 12', 'Project Tracker');
+
+  await page.getByRole('link', { name: /Project/i }).first().click();
+  await page.waitForURL('**/project', { timeout: 10_000 });
+  await pauseForViewer(page, 2000, 'Project Tracker — Board view (Kanban)');
+
+  // Switch to List view
+  const listViewBtn = page.getByRole('button', { name: /List/i }).first();
+  if (await listViewBtn.isVisible().catch(() => false)) {
+    await listViewBtn.click();
+    await pauseForViewer(page, 2000, 'List view — 140 tasks sortable table');
+  }
+
+  // Switch to Timeline view
+  const timelineViewBtn = page.getByRole('button', { name: /Timeline/i }).first();
+  if (await timelineViewBtn.isVisible().catch(() => false)) {
+    await timelineViewBtn.click();
+    await pauseForViewer(page, 2000, 'Timeline view — sprint progress and milestones');
+  }
+
+  // Switch to Stats view
+  const statsViewBtn = page.getByRole('button', { name: /Stats/i }).first();
+  if (await statsViewBtn.isVisible().catch(() => false)) {
+    await statsViewBtn.click();
+    await pauseForViewer(page, 2000, 'Stats view — KPIs, velocity, EPIC progress');
+
+    // Scroll to EPIC Progress
+    const epicProgress = page.getByText('EPIC Progress').first();
+    if (await epicProgress.isVisible().catch(() => false)) {
+      await scrollToElement(page, 'text=EPIC Progress');
+      await pauseForViewer(page, 1500, 'EPIC progress bars — 14 EPICs');
+    }
+
+    // Scroll to Team Allocation
+    const teamAlloc = page.getByText('Team Allocation').first();
+    if (await teamAlloc.isVisible().catch(() => false)) {
+      await scrollToElement(page, 'text=Team Allocation');
+      await pauseForViewer(page, 1500, 'Team allocation — Person A vs B workload');
+    }
+  }
+
+  // ============================================================
+  // ACT 13: GRAND FINALE — BACK TO DASHBOARD
+  // ============================================================
+  chapterMarker('ACT 13', 'Grand Finale');
 
   // Back to Dashboard — full circle
   await page.getByRole('link', { name: /Dashboard/i }).first().click();
@@ -810,5 +854,5 @@ test('MedOS Full Product Demo', async ({ page }) => {
   await page.waitForURL('**/', { timeout: 10_000 });
   await pauseForViewer(page, 2500, 'Signed out — MedOS Full Demo Complete!');
 
-  chapterMarker('DONE', 'MedOS Full Product Demo — 12 Acts, 25 Pages, Every Click Tested');
+  chapterMarker('DONE', 'MedOS Full Product Demo — 13 Acts, 26 Pages, Every Click Tested');
 });
