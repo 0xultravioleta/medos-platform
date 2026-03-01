@@ -307,12 +307,9 @@ test('MedOS Full Product Demo', async ({ page }) => {
     await pauseForViewer(page, 2000, 'CARC code distribution — denial reason analysis');
   }
 
-  // Click on a denial to expand
-  const denialRow = page.locator('[class*="cursor-pointer"]').first();
-  if (await denialRow.isVisible().catch(() => false)) {
-    await denialRow.click();
-    await pauseForViewer(page, 2500, 'Denial detail — root cause, appeal letter, probability');
-  }
+  // Scroll down on denials page to see denial list
+  await page.evaluate(() => window.scrollTo({ top: 500, behavior: 'smooth' }));
+  await pauseForViewer(page, 2000, 'Denial list with CARC codes and appeal status');
 
   // Look for appeal letter
   const appealLetter = page.getByText('Appeal Letter').first();
