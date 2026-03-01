@@ -96,6 +96,11 @@ def create_app() -> FastAPI:
     except ImportError:
         pass  # Not yet created
 
+    # Onboarding wizard (Sprint 5)
+    from medos.routers.onboarding import router as onboarding_router
+
+    app.include_router(onboarding_router)
+
     # Sprint 3: WebSocket events, Agent runner, Workflows
     from medos.routers.agent_runner import router as agent_runner_router
     from medos.routers.workflows import router as workflows_router
