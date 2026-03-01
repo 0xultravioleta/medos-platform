@@ -621,9 +621,18 @@ test('MedOS Full Product Demo', async ({ page }) => {
   // ============================================================
   chapterMarker('ACT 11', 'Project Tracker');
 
-  // Docs is now in (public) group but client-side nav from dashboard sidebar keeps dashboard layout.
-  // Just click Project in the main sidebar to navigate within the dashboard context.
-  await page.getByRole('link', { name: /Project/i }).first().click();
+  // Docs may render in public layout (no dashboard sidebar) or dashboard layout depending on
+  // Next.js client-side routing behavior. Handle both cases.
+  const sidebarProject = page.locator('aside').getByRole('link', { name: /Project/i }).first();
+  if (await sidebarProject.isVisible({ timeout: 2_000 }).catch(() => false)) {
+    await sidebarProject.click();
+  } else {
+    // In public layout — click MedOS logo to go home, auto-redirect to dashboard, then click Project
+    await page.locator('a[href="/"]').first().click();
+    await page.waitForURL('**/dashboard', { timeout: 15_000 });
+    await page.waitForLoadState('networkidle');
+    await page.getByRole('link', { name: /Project/i }).first().click();
+  }
   await page.waitForURL('**/project', { timeout: 10_000 });
   await pauseForViewer(page, 2000, 'Project Tracker — Board view (Kanban)');
 
