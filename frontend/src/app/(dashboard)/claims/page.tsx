@@ -359,6 +359,13 @@ export default function ClaimsPage() {
           </div>
         </div>
         <div className="flex items-center gap-2">
+          <Link
+            href="/claims/analytics"
+            className="flex items-center gap-2 px-3 py-2 rounded-lg border border-[var(--medos-gray-300)] text-sm font-medium text-[var(--medos-gray-700)] hover:bg-[var(--medos-gray-50)] transition-default"
+          >
+            <TrendingDown className="w-4 h-4" />
+            Analytics
+          </Link>
           <button className="flex items-center gap-2 px-3 py-2 rounded-lg border border-[var(--medos-gray-300)] text-sm font-medium text-[var(--medos-gray-700)] hover:bg-[var(--medos-gray-50)] transition-default">
             <Filter className="w-4 h-4" />
             Filter
