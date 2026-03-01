@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Settings, User, Building2, Shield, Bell, Palette, Database, CheckCircle2, Check, Rocket, ChevronRight, Users, MapPin, DollarSign, FileText } from "lucide-react";
+import { Settings, User, Building2, Shield, Bell, Palette, Database, CheckCircle2, Check, Rocket, ChevronRight, Users, MapPin, DollarSign, FileText, Watch, Activity, RefreshCw, Server } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
 
 export default function SettingsPage() {
@@ -225,6 +225,102 @@ export default function SettingsPage() {
                 </span>
                 <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 text-[10px] font-medium border border-blue-200">
                   <MapPin className="w-3 h-3" /> 3 locations
+                </span>
+              </div>
+              <ChevronRight className="w-5 h-5 text-[var(--medos-gray-400)] group-hover:text-[var(--medos-primary)] transition-all" />
+            </div>
+          </div>
+        </div>
+      </Link>
+
+      {/* Device Management card */}
+      <Link href="/settings/devices" className="block">
+        <div className="bg-white rounded-xl border border-[var(--medos-gray-200)] shadow-medos-sm overflow-hidden hover:border-[var(--medos-primary)] transition-all group cursor-pointer">
+          <div className="px-6 py-5 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-[var(--medos-primary-light)] group-hover:bg-[var(--medos-primary)] transition-all">
+                <Watch className="w-5 h-5 text-[var(--medos-primary)] group-hover:text-white transition-all" />
+              </div>
+              <div>
+                <h2 className="text-base font-semibold text-[var(--medos-navy)]">
+                  Device Management
+                </h2>
+                <p className="text-xs text-[var(--medos-gray-500)]">
+                  Register and monitor patient wearable devices, readings, and alerts
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-3">
+              <div className="hidden sm:flex items-center gap-2">
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 text-[10px] font-medium border border-emerald-200">
+                  <Activity className="w-3 h-3" /> 3 devices
+                </span>
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-red-50 text-red-700 text-[10px] font-medium border border-red-200">
+                  <Watch className="w-3 h-3" /> 4 alerts
+                </span>
+              </div>
+              <ChevronRight className="w-5 h-5 text-[var(--medos-gray-400)] group-hover:text-[var(--medos-primary)] transition-all" />
+            </div>
+          </div>
+        </div>
+      </Link>
+
+      {/* Context Monitor card */}
+      <Link href="/settings/context" className="block">
+        <div className="bg-white rounded-xl border border-[var(--medos-gray-200)] shadow-medos-sm overflow-hidden hover:border-[var(--medos-primary)] transition-all group cursor-pointer">
+          <div className="px-6 py-5 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-[var(--medos-primary-light)] group-hover:bg-[var(--medos-primary)] transition-all">
+                <RefreshCw className="w-5 h-5 text-[var(--medos-primary)] group-hover:text-white transition-all" />
+              </div>
+              <div>
+                <h2 className="text-base font-semibold text-[var(--medos-navy)]">
+                  Context Monitor
+                </h2>
+                <p className="text-xs text-[var(--medos-gray-500)]">
+                  Monitor data freshness, view dependency graph, rehydration logs
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-3">
+              <div className="hidden sm:flex items-center gap-2">
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 text-[10px] font-medium border border-emerald-200">
+                  13 contexts
+                </span>
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 text-[10px] font-medium border border-amber-200">
+                  17 events
+                </span>
+              </div>
+              <ChevronRight className="w-5 h-5 text-[var(--medos-gray-400)] group-hover:text-[var(--medos-primary)] transition-all" />
+            </div>
+          </div>
+        </div>
+      </Link>
+
+      {/* System Health card */}
+      <Link href="/settings/system" className="block">
+        <div className="bg-white rounded-xl border border-[var(--medos-gray-200)] shadow-medos-sm overflow-hidden hover:border-[var(--medos-primary)] transition-all group cursor-pointer">
+          <div className="px-6 py-5 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-[var(--medos-primary-light)] group-hover:bg-[var(--medos-primary)] transition-all">
+                <Server className="w-5 h-5 text-[var(--medos-primary)] group-hover:text-white transition-all" />
+              </div>
+              <div>
+                <h2 className="text-base font-semibold text-[var(--medos-navy)]">
+                  System Health
+                </h2>
+                <p className="text-xs text-[var(--medos-gray-500)]">
+                  MCP tool inventory, agent performance, cache & event metrics
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-3">
+              <div className="hidden sm:flex items-center gap-2">
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 text-[10px] font-medium border border-emerald-200">
+                  44 tools
+                </span>
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 text-[10px] font-medium border border-blue-200">
+                  3 agents
                 </span>
               </div>
               <ChevronRight className="w-5 h-5 text-[var(--medos-gray-400)] group-hover:text-[var(--medos-primary)] transition-all" />

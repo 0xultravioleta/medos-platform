@@ -721,6 +721,77 @@ test('MedOS Full Product Demo', async ({ page }) => {
   await page.evaluate(() => window.scrollTo({ top: 300, behavior: 'smooth' }));
   await pauseForViewer(page, 1500, 'Onboarding steps overview');
 
+  // --- /settings/devices — Device Management ---
+  await page.goto('/settings/devices');
+  await page.waitForLoadState('networkidle');
+  await pauseForViewer(page, 2000, 'Device Management — registered wearables');
+
+  // Click Readings tab
+  const readingsTab = page.getByRole('button', { name: /Readings/i });
+  if (await readingsTab.isVisible().catch(() => false)) {
+    await readingsTab.click();
+    await pauseForViewer(page, 1500, 'Device readings with LOINC codes and threshold colors');
+  }
+
+  // Click Alerts tab
+  const alertsTab = page.getByRole('button', { name: /Alerts/i });
+  if (await alertsTab.isVisible().catch(() => false)) {
+    await alertsTab.click();
+    await pauseForViewer(page, 1500, 'Threshold breach alerts — critical and warning');
+  }
+
+  // --- /settings/context — Context Freshness Monitor ---
+  await page.goto('/settings/context');
+  await page.waitForLoadState('networkidle');
+  await pauseForViewer(page, 2000, 'Context Freshness — patient data staleness monitoring');
+
+  // Click System Contexts tab
+  const systemCtxTab = page.getByRole('button', { name: /System Contexts/i });
+  if (await systemCtxTab.isVisible().catch(() => false)) {
+    await systemCtxTab.click();
+    await pauseForViewer(page, 1500, 'System-wide context freshness cards');
+  }
+
+  // Click Dependency Graph tab
+  const depGraphTab = page.getByRole('button', { name: /Dependency Graph/i });
+  if (await depGraphTab.isVisible().catch(() => false)) {
+    await depGraphTab.click();
+    await pauseForViewer(page, 1500, 'Change type to context dependency mapping');
+  }
+
+  // Click Rehydration Log tab
+  const rehydrationTab = page.getByRole('button', { name: /Rehydration Log/i });
+  if (await rehydrationTab.isVisible().catch(() => false)) {
+    await rehydrationTab.click();
+    await pauseForViewer(page, 1500, 'Recent rehydration events timeline');
+  }
+
+  // --- /settings/system — System Health ---
+  await page.goto('/settings/system');
+  await page.waitForLoadState('networkidle');
+  await pauseForViewer(page, 2000, 'System Health — platform overview (44 MCP tools, 3 agents)');
+
+  // Click MCP Inventory tab
+  const mcpTab = page.getByRole('button', { name: /MCP Inventory/i });
+  if (await mcpTab.isVisible().catch(() => false)) {
+    await mcpTab.click();
+    await pauseForViewer(page, 1500, 'MCP tool inventory across 6 servers');
+  }
+
+  // Click Agent Performance tab
+  const agentTab = page.getByRole('button', { name: /Agent Performance/i });
+  if (await agentTab.isVisible().catch(() => false)) {
+    await agentTab.click();
+    await pauseForViewer(page, 1500, 'AI agent performance metrics and confidence distribution');
+  }
+
+  // Click Cache & Events tab
+  const cacheTab = page.getByRole('button', { name: /Cache/i });
+  if (await cacheTab.isVisible().catch(() => false)) {
+    await cacheTab.click();
+    await pauseForViewer(page, 1500, 'Cache statistics and event bus monitoring');
+  }
+
   // ============================================================
   // ACT 12: GRAND FINALE — BACK TO DASHBOARD
   // ============================================================
@@ -739,5 +810,5 @@ test('MedOS Full Product Demo', async ({ page }) => {
   await page.waitForURL('**/', { timeout: 10_000 });
   await pauseForViewer(page, 2500, 'Signed out — MedOS Full Demo Complete!');
 
-  chapterMarker('DONE', 'MedOS Full Product Demo — 12 Acts, 22 Pages, Every Click Tested');
+  chapterMarker('DONE', 'MedOS Full Product Demo — 12 Acts, 25 Pages, Every Click Tested');
 });
