@@ -106,6 +106,11 @@ def create_app() -> FastAPI:
 
     app.include_router(monitoring_router)
 
+    # Pilot metrics (Sprint 6)
+    from medos.routers.pilot_metrics import router as pilot_metrics_router
+
+    app.include_router(pilot_metrics_router)
+
     # Sprint 3: WebSocket events, Agent runner, Workflows
     from medos.routers.agent_runner import router as agent_runner_router
     from medos.routers.workflows import router as workflows_router
@@ -119,6 +124,11 @@ def create_app() -> FastAPI:
     from medos.mcp.hipaa_fastmcp import medos_mcp
 
     app.mount("/mcp", medos_mcp.streamable_http_app())
+
+    # Demo seed data (non-production only)
+    from medos.routers.demo_seed import router as demo_seed_router
+
+    app.include_router(demo_seed_router)
 
     # Dev-only routes (token generation, etc.) -- never in production
     if settings.app_env == "development" and settings.app_debug:
