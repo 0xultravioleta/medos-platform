@@ -16,23 +16,27 @@ import {
 const FEATURES = [
   {
     icon: Brain,
-    title: "AI-Powered Clinical Notes",
-    description: "Generate SOAP notes, assessments, and care plans with ambient AI documentation.",
+    title: "10 AI Agents",
+    description:
+      "LangGraph agents with confidence scoring and bounded autonomy for clinical, billing, and operational workflows.",
   },
   {
     icon: ClipboardList,
-    title: "Automated Claims Processing",
-    description: "Real-time eligibility checks, auto-coding, and denial prevention.",
+    title: "X12 Revenue Pipeline",
+    description:
+      "837P/835 claims, Prior Authorization, Denial Management — automated end-to-end with AI agents.",
   },
   {
     icon: Shield,
-    title: "HIPAA-Compliant by Design",
-    description: "Enterprise-grade security with audit trails, encryption, and access controls.",
+    title: "HIPAA-Native Security",
+    description:
+      "Field-level encryption, tenant isolation, audit trails, break-the-glass access, SOC 2 compliance.",
   },
   {
     icon: Zap,
-    title: "Interoperable & FHIR-Native",
-    description: "Connect with any EHR, lab, or pharmacy through FHIR R4 and HL7 standards.",
+    title: "44 MCP Tools + A2A",
+    description:
+      "6 MCP servers, A2A protocol for agent-to-agent communication, FHIR R4 native data layer.",
   },
 ];
 
@@ -116,6 +120,20 @@ export default function LoginPage() {
               Unify clinical workflows, revenue cycle management, and patient engagement in one intelligent platform.
             </p>
 
+            {/* Stats bar */}
+            <div className="flex flex-wrap gap-4 mb-10 text-sm">
+              {["53 Routes", "44 MCP Tools", "10 AI Agents", "21 States"].map(
+                (stat) => (
+                  <span
+                    key={stat}
+                    className="inline-flex items-center px-3 py-1 rounded-full bg-white/10 text-gray-300 text-xs font-medium border border-white/10"
+                  >
+                    {stat}
+                  </span>
+                )
+              )}
+            </div>
+
             {/* Features */}
             <div className="space-y-5">
               {FEATURES.map((feature) => (
@@ -129,6 +147,26 @@ export default function LoginPage() {
                   </div>
                 </div>
               ))}
+            </div>
+
+            {/* Bring Your Agent */}
+            <div className="mt-12 rounded-xl border border-white/10 bg-white/[0.04] backdrop-blur-sm p-6">
+              <h3 className="text-lg font-semibold text-white mb-2">
+                Bring Your Agent
+              </h3>
+              <p className="text-sm text-gray-400 leading-relaxed mb-4">
+                MedOS exposes 44 MCP tools and A2A endpoints. Connect your autonomous
+                agent to clinical workflows, billing pipelines, and patient data.
+              </p>
+              <a
+                href="/docs"
+                className="inline-flex items-center gap-1.5 text-sm font-medium text-[var(--medos-accent)] hover:text-white transition-colors"
+              >
+                Explore the docs
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
+              </a>
             </div>
           </div>
 
@@ -256,6 +294,15 @@ export default function LoginPage() {
               <br />
               By signing in, you agree to our Terms of Service and Privacy Policy.
             </p>
+          </div>
+
+          <div className="mt-4 text-center">
+            <a
+              href="/docs"
+              className="text-xs text-[var(--medos-primary)] hover:text-[var(--medos-primary-hover)] font-medium transition-colors"
+            >
+              Are you an agent? Read the docs &rarr;
+            </a>
           </div>
         </div>
       </div>

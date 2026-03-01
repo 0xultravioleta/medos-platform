@@ -1,23 +1,61 @@
-# CLAUDE.md - MedOS Platform
+# CLAUDE.md
 
-> Instrucciones operativas para Claude al trabajar en el codebase de MedOS Platform.
-> Actualizado: 2026-02-28
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
 ---
 
 ## PROYECTO
 
-**MedOS Platform** = el codebase del Healthcare OS -- FastAPI backend + Next.js frontend.
+**MedOS Platform** = Healthcare OS -- FastAPI backend + Next.js frontend.
 - **Knowledge base:** Vault Obsidian en `Z:\medos\` (repo `medos`)
 - **Este repo:** Codigo fuente de la plataforma (repo `medos-platform`)
 - **Target:** Mid-size specialty practices (5-30 providers) en Florida
-- **Equipo:** 2 personas + AI tools (Claude Code + Cursor)
 
 **Antes de implementar algo, consultar la documentacion en el vault `medos`:**
 - ADRs en `04-architecture/adr/` -- decisiones ya tomadas
 - Deep-dives en `05-domain/` -- conocimiento de healthcare
 - Engineering guides en `06-engineering/` -- guias de implementacion
-- Execution plan en `03-projects/PHASE-1-EXECUTION-PLAN.md` -- que task sigue
+- Execution plan en `03-projects/PHASE-1-EXECUTION-PLAN.md`
+
+---
+
+## COMANDOS
+
+### Backend
+```bash
+# Local dev (all services)
+docker-compose up -d
+docker-compose logs -f api
+
+# Install deps and run tests (from repo root)
+cd backend
+pip install -e ".[dev]"
+pytest                                  # All tests
+pytest tests/test_fhir_patient.py       # Single test file
+pytest tests/test_fhir_patient.py::test_create_patient  # Single test
+pytest -v --cov=medos                   # With coverage
+ruff check src/                         # Lint
+ruff format --check src/                # Format check
+
+# Database migrations
+alembic upgrade head
+alembic revision --autogenerate -m "description"
+```
+
+### Frontend
+```bash
+cd frontend
+npm install
+npm run dev                             # Dev server (localhost:3000)
+npm run build                           # Production build
+npm run lint                            # ESLint
+npx playwright test                     # E2E tests (against Vercel deployment)
+npm run demo                            # Record demo video (headed browser)
+npm run demo:headless                   # Record demo video (headless)
+```
+
+### CI (GitHub Actions)
+CI runs on push/PR to main/master: ruff lint + format check, pytest with PostgreSQL 17 + Redis 7 service containers, Trivy + pip-audit security scan, Docker build verification.
 
 ---
 
@@ -32,7 +70,6 @@
 ### ADR-002: Schema-per-tenant
 - Cada tenant (practica medica) tiene su propio PostgreSQL schema
 - Row Level Security como defensa adicional
-- Per-tenant KMS keys para encryption
 - Middleware extrae tenant_id del JWT y setea `SET search_path`
 
 ### ADR-003: LangGraph + Claude
@@ -42,60 +79,72 @@
 - Toda llamada a LLM auditada (FHIR Provenance)
 
 ### ADR-004: FastAPI Backend
-- Python 3.12+, FastAPI, SQLAlchemy 2.0, Pydantic v2
+- Python 3.11+, FastAPI, SQLAlchemy 2.0, Pydantic v2
 - Async everywhere (asyncpg, httpx)
 - Estructura: routers -> services -> repositories
 
 ---
 
-## ESTRUCTURA DEL PROYECTO
+## BIG PICTURE ARCHITECTURE
 
+### Request Flow
 ```
-medos-platform/
-  backend/
-    src/medos/
-      main.py              # FastAPI app factory
-      config/              # Settings (pydantic-settings, .env)
-      routers/             # Endpoints (health, fhir_patient, etc.)
-        health.py          # GET /health
-        fhir_patient.py    # FHIR Patient CRUD + search
-      services/            # Business logic (coding, matching, etc.)
-      repositories/        # Data access (PostgreSQL queries)
-      middleware/          # Auth, tenant isolation, audit logging
-      models/              # SQLAlchemy models
-      schemas/             # Pydantic request/response schemas
-      fhir/                # FHIR resource validation, profiles
-      agents/              # LangGraph AI agents
-      utils/               # Helpers
-    tests/                 # pytest (mirror src structure)
-    alembic/               # Database migrations
-    Dockerfile             # Multi-stage, non-root
-    pyproject.toml         # Dependencies + ruff + pytest config
-  frontend/                # Next.js 15 (Sprint 2+)
-  docker-compose.yml       # Local dev: API + PostgreSQL 17 + Redis
-  .env.example             # All variables documented
+Next.js Frontend (Vercel)
+    ↕ REST /api/v1/* (mock data) + /fhir/r4/* (FHIR resources)
+FastAPI (main.py::create_app)
+    → RequestLoggingMiddleware → CORS → Router
+    → Routers (health, fhir_patient, mock_api, agent_*, mcp_sse, workflows, ws_events, ...)
+    → Services (fhir_service)
+    → Repositories (fhir_repository → PostgreSQL JSONB)
 ```
 
----
+### MCP + HIPAA Security Pipeline
+El backend expone un MCP server en `/mcp` (Streamable HTTP) para que agentes AI externos (Claude Code, etc.) accedan a tools con seguridad HIPAA:
 
-## TECH STACK
+```
+External Agent → FastMCP (JSON-RPC, /mcp) → HIPAAFastMCP.call_tool() override
+    1. Agent authentication (tenant_id required)
+    2. PHI access policy check (per agent type: full/limited/none)
+    3. Per-agent rate limiting (60/min)
+    4. Execute tool
+    5. HIPAA audit log (success or failure)
+```
 
-| Capa | Tecnologia | Version |
-|------|-----------|---------|
-| Backend | FastAPI | 0.115+ |
-| Python | CPython | 3.12+ |
-| ORM | SQLAlchemy | 2.0+ (async) |
-| Validation | Pydantic | v2.10+ |
-| DB | PostgreSQL + pgvector | 17 |
-| Cache | Redis | 7+ |
-| LLM | Claude API (Anthropic) | claude-sonnet-4 |
-| Agents | LangGraph | latest |
-| Frontend | Next.js | 15 (Sprint 2) |
-| Container | Docker | multi-stage |
-| IaC | Terraform | (repo separado) |
-| CI/CD | GitHub Actions | (configurar Sprint 0) |
-| Linter | ruff | 0.8+ |
-| Tests | pytest + pytest-asyncio | 8.3+ |
+- **`@hipaa_tool` decorator** (`mcp/decorators.py`): marca funciones con phi_level, allowed_agents, server, requires_approval. Se coleccionan globalmente y se registran en `HIPAAFastMCP.register_hipaa_tools()`.
+- **MCP Servers** (`mcp/servers/`): fhir_server, scribe_server, billing_server, scheduling_server, device_server, context_server -- cada uno registra tools via `@hipaa_tool`.
+- **Gateway** (`mcp/gateway.py`): tool routing + registry interface.
+
+### Agent Architecture
+LangGraph agents siguen el patron en `agents/base.py`:
+- `create_agent_context()` -- factory con FHIR scopes por tipo de agente
+- `route_by_confidence()` -- auto-approve (>=0.95), pass (>=0.85), o create review task (<0.85)
+- `emit_agent_event()` -- audit + event bus
+- Safety layer (`core/safety_layer.py`) checks antes de aprobar output
+
+Cada agente tiene su directorio: `agents/{name}/` con `state.py`, `nodes.py`, `graph.py`, `prompts.py`.
+Agentes implementados: `clinical_scribe`, `prior_auth`, `denial_mgmt`.
+
+### Frontend Architecture
+Next.js 16 con App Router, Tailwind CSS 4, TypeScript:
+- **Route group `(dashboard)/`**: layout con Sidebar + TopBar, protegido por `useAuth()`
+- **`lib/api.ts`**: fetch wrapper que retorna `null` si el backend no responde -- cada pagina hace fallback a `lib/mock-data.ts`
+- **`lib/auth-context.tsx`**: AuthProvider (mock auth, cualquier credencial funciona en dev)
+- Admin pages en `(dashboard)/admin/*` con layout propio
+
+### Billing Module
+`billing/` contiene logica de RCM (Revenue Cycle Management):
+- `x12_837p.py` -- generacion de claims X12 837P
+- `x12_835_parser.py` -- parsing de remittance advice
+- `claims_scrubber.py` -- validacion pre-submission
+- `payment_posting.py` -- ERA auto-posting
+- `underpayment_detector.py` -- deteccion de underpayments
+
+### Core Security
+`core/` contiene modulos criticos de seguridad:
+- `field_encryption.py` -- encryption a nivel de campo para PII
+- `credential_injection.py` -- inyeccion segura de credenciales
+- `audit_agent.py` -- audit events FHIR-compliant
+- `context_freshness.py` / `context_rehydration.py` -- manejo de contexto de agentes
 
 ---
 
@@ -107,10 +156,11 @@ medos-platform/
 - **SIEMPRE** Pydantic models para request/response bodies
 - **SIEMPRE** dependency injection de FastAPI (no globals)
 - **NUNCA** `print()` -- usar `logging` o `structlog`
-- **NUNCA** SQL raw sin parametrizacion (SQL injection)
+- **NUNCA** SQL raw sin parametrizacion
 - **NUNCA** secrets hardcodeados -- usar `settings` de pydantic-settings
-- Linter: `ruff check` debe pasar sin errores
+- Linter: `ruff check` con reglas E, F, W, I, N, UP, S, B, A, SIM (S101 ignorada para tests)
 - Line length: 120 caracteres
+- ruff version pinned a 0.8.6
 
 ### FHIR
 - Recursos FHIR son dicts Python (no modelos SQLAlchemy)
@@ -120,17 +170,21 @@ medos-platform/
 - Busquedas retornan `Bundle` con `type: "searchset"`
 - Versionamiento: `meta.versionId` incrementa en cada update
 
+### MCP Tools
+- Nuevos tools se crean con el decorator `@hipaa_tool` en un server dentro de `mcp/servers/`
+- Siempre especificar `phi_level` ("none", "limited", "full") y `allowed_agents`
+- Tools se registran automaticamente al importar el server module en `main.py::_register_mcp_tools()`
+
 ### Tests
 - Archivos: `test_<feature>.py` en `backend/tests/`
 - Naming: `test_<action>_<expected>` (ej: `test_create_patient`)
 - Usar `TestClient` de FastAPI para endpoints
-- Fixtures en `conftest.py`
+- `asyncio_mode = "auto"` en pytest config
 - Coverage target: 80%+
 
 ### Git
 - Conventional commits: `feat:`, `fix:`, `docs:`, `refactor:`, `test:`
 - Branch por feature: `feat/S0-T18-fastapi-scaffold`
-- PR a `main` con CI checks pasando
 - NUNCA force push a main
 
 ### Healthcare Compliance
@@ -144,54 +198,22 @@ medos-platform/
 
 ---
 
-## API ENDPOINTS (actuales)
+## KEY FILES
 
-| Method | Path | Description |
-|--------|------|-------------|
-| GET | `/health` | Health check |
-| GET | `/fhir/r4/metadata` | FHIR CapabilityStatement |
-| POST | `/fhir/r4/Patient` | Create Patient |
-| GET | `/fhir/r4/Patient/{id}` | Read Patient |
-| GET | `/fhir/r4/Patient?name=&birthdate=&identifier=` | Search Patients |
-
----
-
-## COMANDOS
-
-```bash
-# Local dev
-docker-compose up -d              # Start all services
-docker-compose logs -f api        # Watch API logs
-
-# Tests
-cd backend
-pip install -e ".[dev]"           # Install with dev deps
-pytest                            # Run tests
-pytest --cov=medos                # With coverage
-ruff check src/                   # Lint
-
-# Database
-alembic upgrade head              # Run migrations
-alembic revision --autogenerate -m "description"  # New migration
-```
-
----
-
-## SPRINT ACTUAL Y TASK IDS
-
-Ver `Z:\medos\03-projects\PHASE-1-EXECUTION-PLAN.md` para el plan completo.
-Task IDs: `S{sprint}-T{numero}` (ej: `S0-T18` = Sprint 0, Task 18)
-
-### Tasks completadas en este repo:
-- [x] S0-T03: GitHub repo creado con .gitignore
-- [x] S0-T05: .env.example con todas las variables
-- [x] S0-T18: FastAPI project scaffold (in-memory store, sin DB real aun)
-- [x] S0-T19: Dockerfile + docker-compose (API + PostgreSQL 17 + Redis)
-
-### Proximas tasks:
-- [ ] Frontend Next.js 15 con login page y patient dashboard
-- [ ] Wire FHIR routes a PostgreSQL real (conectar FHIRRepository)
-- [ ] AI Documentation agent (LangGraph + Claude)
+| File | Purpose |
+|------|---------|
+| `backend/src/medos/main.py` | FastAPI app factory, router registration, MCP mount |
+| `backend/src/medos/config/settings.py` | All env vars via pydantic-settings (`Settings` class) |
+| `backend/src/medos/mcp/hipaa_fastmcp.py` | HIPAAFastMCP -- FastMCP subclass with security pipeline |
+| `backend/src/medos/mcp/decorators.py` | `@hipaa_tool` decorator for MCP tool registration |
+| `backend/src/medos/agents/base.py` | Agent infrastructure: context, confidence routing, events |
+| `backend/src/medos/middleware/auth.py` | JWT auth (HS256 dev / RS256 prod via JWKS) |
+| `backend/src/medos/middleware/security.py` | Security headers, request validation |
+| `frontend/src/lib/api.ts` | API client with null-return fallback to mock data |
+| `frontend/src/lib/mock-data.ts` | Mock patients, appointments, stats for demo |
+| `frontend/src/app/(dashboard)/layout.tsx` | Dashboard shell (Sidebar + TopBar + auth guard) |
+| `docker-compose.yml` | Local dev: API (:8000) + PostgreSQL 17/pgvector (:5432) + Redis 7 (:6379) |
+| `.github/workflows/ci.yml` | CI pipeline (lint, test, security, docker build) |
 
 ---
 
@@ -199,11 +221,8 @@ Task IDs: `S{sprint}-T{numero}` (ej: `S0-T18` = Sprint 0, Task 18)
 
 **REGLA: Despues de cada commit significativo, actualizar `PROGRESS.md` en la raiz del repo.**
 
-PROGRESS.md cuenta la historia del proyecto de forma narrativa y no-tecnica, como si un candidato le estuviera mostrando a un hiring manager lo que logro. Incluye:
+PROGRESS.md cuenta la historia del proyecto de forma narrativa y no-tecnica. Incluye:
 - Que se hizo y POR QUE (no solo el "what")
-- El approach sistematico (research → decisions → build)
 - Metricas concretas (tests, coverage, lineas, docs)
 - Tabla "Mock vs Production-Ready" siempre actualizada
 - "What's Next" con los siguientes pasos claros
-
-El tono es profesional pero conversacional. No es un changelog tecnico -- es una historia de progreso.
