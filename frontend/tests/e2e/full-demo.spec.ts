@@ -383,6 +383,8 @@ test('MedOS Full Product Demo', async ({ page }) => {
 
   await page.getByRole('link', { name: /Pilot/i }).first().click();
   await page.waitForURL('**/pilot', { timeout: 10_000 });
+  // Wait for content to load (API fetch with fallback to mock data)
+  await page.waitForSelector('text=Time Saved', { timeout: 10_000 }).catch(() => {});
   await pauseForViewer(page, 2000, 'Pilot Metrics — KPIs for Dr. Di Reze');
 
   // Time saved
@@ -414,9 +416,351 @@ test('MedOS Full Product Demo', async ({ page }) => {
   }
 
   // ============================================================
-  // ACT 10: DOCS — THOROUGH EXPLORATION (Sidebar #9)
+  // ACT 10: PROJECT TRACKER (Sidebar #9)
   // ============================================================
-  chapterMarker('ACT 10', 'Documentation Center');
+  chapterMarker('ACT 10', 'Project Tracker');
+
+  await page.getByRole('link', { name: /Project/i }).first().click();
+  await page.waitForURL('**/project', { timeout: 10_000 });
+  await pauseForViewer(page, 2000, 'Project Tracker — Board view (Kanban)');
+
+  // Switch to List view
+  const listViewBtn = page.getByRole('button', { name: /List/i }).first();
+  if (await listViewBtn.isVisible().catch(() => false)) {
+    await listViewBtn.click();
+    await pauseForViewer(page, 2000, 'List view — 140 tasks sortable table');
+  }
+
+  // Switch to Timeline view
+  const timelineViewBtn = page.getByRole('button', { name: /Timeline/i }).first();
+  if (await timelineViewBtn.isVisible().catch(() => false)) {
+    await timelineViewBtn.click();
+    await pauseForViewer(page, 2000, 'Timeline view — sprint progress and milestones');
+  }
+
+  // Switch to Stats view
+  const statsViewBtn = page.getByRole('button', { name: /Stats/i }).first();
+  if (await statsViewBtn.isVisible().catch(() => false)) {
+    await statsViewBtn.click();
+    await pauseForViewer(page, 2000, 'Stats view — KPIs, velocity, EPIC progress');
+
+    // Scroll to EPIC Progress
+    const epicProgress = page.getByText('EPIC Progress').first();
+    if (await epicProgress.isVisible().catch(() => false)) {
+      await scrollToElement(page, 'text=EPIC Progress');
+      await pauseForViewer(page, 1500, 'EPIC progress bars — 14 EPICs');
+    }
+
+    // Scroll to Team Allocation
+    const teamAlloc = page.getByText('Team Allocation').first();
+    if (await teamAlloc.isVisible().catch(() => false)) {
+      await scrollToElement(page, 'text=Team Allocation');
+      await pauseForViewer(page, 1500, 'Team allocation — Person A vs B workload');
+    }
+  }
+
+  // ============================================================
+  // ACT 11: ADMIN HUB (Sidebar #10)
+  // ============================================================
+  chapterMarker('ACT 11', 'Admin Hub — Command Center');
+
+  await page.getByRole('link', { name: /Admin/i }).first().click();
+  await page.waitForURL('**/admin/dashboard', { timeout: 10_000 });
+  await pauseForViewer(page, 2500, 'Admin Dashboard — executive overview');
+
+  // System Health KPIs
+  const uptimeKpi = page.getByText('System Uptime').first();
+  if (await uptimeKpi.isVisible().catch(() => false)) {
+    await highlightElement(page, 'text=System Uptime', 1200);
+  }
+
+  // Scroll to MCP Server Health Grid
+  await scrollToElement(page, 'text=MCP Server Health');
+  await pauseForViewer(page, 1500, 'MCP Server Health Grid — 6 servers');
+
+  // Scroll to AI Agent Performance
+  await scrollToElement(page, 'text=AI Agent Performance');
+  await pauseForViewer(page, 1500, 'AI Agent Performance — confidence scores');
+
+  // Scroll to HIPAA Compliance snapshot
+  await scrollToElement(page, 'text=HIPAA Compliance');
+  await pauseForViewer(page, 1500, 'HIPAA Compliance — 94/100 score');
+
+  // Scroll to Cost Overview
+  await scrollToElement(page, 'text=Cost Overview');
+  await pauseForViewer(page, 1500, 'Cost Overview — $42/day, 84% of budget');
+
+  // Scroll to Recent Activity
+  await scrollToElement(page, 'text=Recent Activity');
+  await pauseForViewer(page, 1500, 'Recent Activity feed');
+
+  // --- Admin Monitoring ---
+  const monitoringLink = page.getByRole('link', { name: /Monitoring/i });
+  if (await monitoringLink.first().isVisible().catch(() => false)) {
+    await monitoringLink.first().click();
+  } else {
+    await page.locator('aside').last().getByRole('link', { name: /Monitoring/i }).first().click();
+  }
+  await page.waitForLoadState('networkidle');
+  await pauseForViewer(page, 2000, 'Monitoring — real-time metrics');
+
+  // Click Alerts tab
+  const monAlerts = page.getByRole('button', { name: /Alerts/i }).first();
+  if (await monAlerts.isVisible().catch(() => false)) {
+    await monAlerts.click();
+    await pauseForViewer(page, 1500, 'Active alerts — severity and actions');
+  }
+
+  // Click AI Observability tab
+  const aiObsTab = page.getByRole('button', { name: /AI Observ/i }).first();
+  if (await aiObsTab.isVisible().catch(() => false)) {
+    await aiObsTab.click();
+    await pauseForViewer(page, 1500, 'AI Observability — agent metrics and token usage');
+  }
+
+  // --- Admin Tenants ---
+  await page.locator('aside').last().getByRole('link', { name: /Tenants/i }).first().click();
+  await page.waitForLoadState('networkidle');
+  await page.waitForTimeout(500);
+  await pauseForViewer(page, 2000, 'Tenant Management — 3 practices');
+
+  // Click Onboarding tab
+  const onboardTab = page.getByRole('button', { name: /Onboarding/i }).first();
+  if (await onboardTab.isVisible().catch(() => false)) {
+    await onboardTab.click();
+    await pauseForViewer(page, 1500, 'Onboarding Wizard — 6-step practice setup');
+  }
+
+  // --- Admin Users ---
+  await page.locator('aside').last().getByRole('link', { name: /Users/i }).first().click();
+  await page.waitForLoadState('networkidle');
+  await page.waitForTimeout(500);
+  await pauseForViewer(page, 2000, 'User & Role Management — 6 users');
+
+  // Click Roles tab
+  const rolesTab = page.getByRole('button', { name: /Roles/i }).first();
+  if (await rolesTab.isVisible().catch(() => false)) {
+    await rolesTab.click();
+    await pauseForViewer(page, 1500, 'RBAC Matrix — 11 permissions x 6 roles');
+  }
+
+  // --- Admin Billing ---
+  await page.locator('aside').last().getByRole('link', { name: /Billing/i }).first().click();
+  await page.waitForLoadState('networkidle');
+  await page.waitForTimeout(500);
+  await pauseForViewer(page, 2000, 'Billing Configuration — 3 payer contracts');
+
+  // Click Fee Schedules tab
+  const feeTab2 = page.getByRole('button', { name: /Fee Schedule/i }).first();
+  if (await feeTab2.isVisible().catch(() => false)) {
+    await feeTab2.click();
+    await pauseForViewer(page, 1500, 'Fee Schedules — CPT codes and payer rates');
+  }
+
+  // --- Admin Integrations ---
+  await page.locator('aside').last().getByRole('link', { name: /Integrations/i }).first().click();
+  await page.waitForLoadState('networkidle');
+  await page.waitForTimeout(500);
+  await pauseForViewer(page, 2000, 'Integration Management — EHR, Devices, Labs');
+
+  // Click Devices tab
+  const devicesIntTab = page.getByRole('button', { name: /Device/i }).first();
+  if (await devicesIntTab.isVisible().catch(() => false)) {
+    await devicesIntTab.click();
+    await pauseForViewer(page, 1500, 'Device Integrations — Oura, Apple Watch, Dexcom');
+  }
+
+  // --- Admin MCP Servers ---
+  await page.locator('aside').last().getByRole('link', { name: /MCP Servers/i }).first().click();
+  await page.waitForLoadState('networkidle');
+  await page.waitForTimeout(500);
+  await pauseForViewer(page, 2000, 'MCP Server Management — 6 servers, 44 tools');
+
+  // Click Tool Inventory tab
+  const toolInvTab = page.getByRole('button', { name: /Tool Inventory/i }).first();
+  if (await toolInvTab.isVisible().catch(() => false)) {
+    await toolInvTab.click();
+    await pauseForViewer(page, 1500, '44-tool inventory with PHI levels');
+  }
+
+  // --- Admin AI Agents ---
+  await page.locator('aside').last().getByRole('link', { name: /AI Agents/i }).first().click();
+  await page.waitForLoadState('networkidle');
+  await page.waitForTimeout(500);
+  await pauseForViewer(page, 2000, 'AI Agent Configuration — 3 active, 2 planned');
+
+  // Click Configuration tab
+  const configTab = page.getByRole('button', { name: /Configuration/i }).first();
+  if (await configTab.isVisible().catch(() => false)) {
+    await configTab.click();
+    await pauseForViewer(page, 1500, 'Agent parameters — confidence thresholds');
+  }
+
+  // --- Admin Security ---
+  await page.locator('aside').last().getByRole('link', { name: /Security/i }).first().click();
+  await page.waitForLoadState('networkidle');
+  await page.waitForTimeout(500);
+  await pauseForViewer(page, 2500, 'Security & HIPAA Compliance — 94/100');
+
+  // Click Audit Log tab
+  const auditTab = page.getByRole('button', { name: /Audit/i }).first();
+  if (await auditTab.isVisible().catch(() => false)) {
+    await auditTab.click();
+    await pauseForViewer(page, 1500, 'Audit Log — 15 entries, break-the-glass tracking');
+  }
+
+  // Click Encryption tab
+  const encTab = page.getByRole('button', { name: /Encryption/i }).first();
+  if (await encTab.isVisible().catch(() => false)) {
+    await encTab.click();
+    await pauseForViewer(page, 1500, 'Encryption Status — field-level + TDE + TLS');
+  }
+
+  // --- Admin Feature Flags ---
+  await page.locator('aside').last().getByRole('link', { name: /Feature Flags/i }).first().click();
+  await page.waitForLoadState('networkidle');
+  await page.waitForTimeout(500);
+  await pauseForViewer(page, 2000, 'Feature Flags — 22 flags across 4 categories');
+
+  // Scroll to see operational flags
+  await page.evaluate(() => window.scrollTo({ top: 800, behavior: 'smooth' }));
+  await pauseForViewer(page, 1500, 'Operational flags — maintenance mode, read-only');
+
+  // --- Admin System ---
+  await page.locator('aside').last().getByRole('link', { name: /System/i }).first().click();
+  await page.waitForLoadState('networkidle');
+  await page.waitForTimeout(500);
+  await pauseForViewer(page, 1500, 'System Configuration — cache, context, events');
+
+  // --- Admin Data Management ---
+  await page.locator('aside').last().getByRole('link', { name: /Data/i }).first().click();
+  await page.waitForLoadState('networkidle');
+  await page.waitForTimeout(500);
+  await pauseForViewer(page, 1500, 'Data Management — import, backup, retention');
+
+  // Click Backup tab
+  const backupTab = page.getByRole('button', { name: /Backup/i }).first();
+  if (await backupTab.isVisible().catch(() => false)) {
+    await backupTab.click();
+    await pauseForViewer(page, 1500, 'Backup & Recovery — RPO 15min, RTO 1h');
+  }
+
+  // --- Admin Project (migrated) ---
+  await page.locator('aside').last().getByRole('link', { name: /Project/i }).first().click();
+  await page.waitForLoadState('networkidle');
+  await page.waitForTimeout(500);
+  await pauseForViewer(page, 2000, 'Project Tracker in Admin — Kanban board');
+
+  // ============================================================
+  // ACT 12: THEORIA MEDICAL PILOT (Sidebar #11)
+  // ============================================================
+  chapterMarker('ACT 12', 'Theoria Medical — Post-Acute AI Platform');
+
+  // --- Clinical Operations ---
+  await page.getByRole('link', { name: /Theoria/i }).first().click();
+  await page.waitForLoadState('networkidle');
+  await page.waitForTimeout(500);
+  await pauseForViewer(page, 2000, 'Facility Console — Multi-site SNF dashboard');
+  // Click Patients tab
+  const patientsTab = page.getByRole('button', { name: /Patients/i }).first();
+  if (await patientsTab.isVisible().catch(() => false)) {
+    await patientsTab.click();
+    await pauseForViewer(page, 1500, 'Patient roster across all facilities');
+  }
+  // Click Staffing tab
+  const staffingTab = page.getByRole('button', { name: /Staffing/i }).first();
+  if (await staffingTab.isVisible().catch(() => false)) {
+    await staffingTab.click();
+    await pauseForViewer(page, 1500, 'Provider staffing & shift coverage');
+  }
+
+  await page.locator('aside').last().getByRole('link', { name: /Shift Handoff/i }).first().click();
+  await page.waitForLoadState('networkidle');
+  await page.waitForTimeout(500);
+  await pauseForViewer(page, 2000, 'Shift Handoff — Priority-ranked briefing');
+
+  await page.locator('aside').last().getByRole('link', { name: /Post-Acute Guardian/i }).first().click();
+  await page.waitForLoadState('networkidle');
+  await page.waitForTimeout(500);
+  await pauseForViewer(page, 2000, 'Post-Acute Guardian — Live wearable monitoring');
+  const alertQueueTab = page.getByRole('button', { name: /Alert/i }).first();
+  if (await alertQueueTab.isVisible().catch(() => false)) {
+    await alertQueueTab.click();
+    await pauseForViewer(page, 1500, 'Alert Queue — AI-powered triage');
+  }
+
+  await page.locator('aside').last().getByRole('link', { name: /Readmission/i }).first().click();
+  await page.waitForLoadState('networkidle');
+  await page.waitForTimeout(500);
+  await pauseForViewer(page, 2000, 'Readmission Risk — Predictive scoring');
+
+  // --- Revenue Capture ---
+  await page.locator('aside').last().getByRole('link', { name: /CCM/i }).first().click();
+  await page.waitForLoadState('networkidle');
+  await page.waitForTimeout(500);
+  await pauseForViewer(page, 2000, 'CCM Time Tracker — CPT 99490 billing');
+  const billingTab = page.getByRole('button', { name: /Billing/i }).first();
+  if (await billingTab.isVisible().catch(() => false)) {
+    await billingTab.click();
+    await pauseForViewer(page, 1500, 'Billing threshold — revenue capture');
+  }
+
+  await page.locator('aside').last().getByRole('link', { name: /RPM/i }).first().click();
+  await page.waitForLoadState('networkidle');
+  await page.waitForTimeout(500);
+  await pauseForViewer(page, 2000, 'RPM Revenue — Device billing dashboard');
+
+  await page.locator('aside').last().getByRole('link', { name: /Care Gap/i }).first().click();
+  await page.waitForLoadState('networkidle');
+  await page.waitForTimeout(500);
+  await pauseForViewer(page, 2000, 'Care Gap Scanner — Population health');
+
+  // --- Data Intelligence ---
+  await page.locator('aside').last().getByRole('link', { name: /Discharge/i }).first().click();
+  await page.waitForLoadState('networkidle');
+  await page.waitForTimeout(500);
+  await pauseForViewer(page, 2000, 'Discharge Reconciliation — Hospital-SNF bridge');
+  const medChangesTab = page.getByRole('button', { name: /Med/i }).first();
+  if (await medChangesTab.isVisible().catch(() => false)) {
+    await medChangesTab.click();
+    await pauseForViewer(page, 1500, 'Medication comparison — ChartEasy integration');
+  }
+
+  await page.locator('aside').last().getByRole('link', { name: /Care Plan/i }).first().click();
+  await page.waitForLoadState('networkidle');
+  await page.waitForTimeout(500);
+  await pauseForViewer(page, 2000, 'Care Plan Optimizer — AI recommendations');
+
+  await page.locator('aside').last().getByRole('link', { name: /Staffing/i }).first().click();
+  await page.waitForLoadState('networkidle');
+  await page.waitForTimeout(500);
+  await pauseForViewer(page, 2000, 'Staffing Optimizer — Dynamic allocation');
+
+  // --- Enterprise & Governance ---
+  await page.locator('aside').last().getByRole('link', { name: /ACO REACH/i }).first().click();
+  await page.waitForLoadState('networkidle');
+  await page.waitForTimeout(500);
+  await pauseForViewer(page, 2000, 'ACO REACH — Empassion Health quality tracking');
+
+  await page.locator('aside').last().getByRole('link', { name: /PE Executive/i }).first().click();
+  await page.waitForLoadState('networkidle');
+  await page.waitForTimeout(500);
+  await pauseForViewer(page, 2000, 'PE Executive Dashboard — Amulet Capital reporting');
+  const financialTab = page.getByRole('button', { name: /Financial/i }).first();
+  if (await financialTab.isVisible().catch(() => false)) {
+    await financialTab.click();
+    await pauseForViewer(page, 1500, 'Financial Roll-up — Platform value creation');
+  }
+
+  await page.locator('aside').last().getByRole('link', { name: /Credentialing/i }).first().click();
+  await page.waitForLoadState('networkidle');
+  await page.waitForTimeout(500);
+  await pauseForViewer(page, 2000, 'Credentialing Center — 21-state licensing');
+
+  // ============================================================
+  // ACT 13: DOCS — THOROUGH EXPLORATION (Sidebar #12 — PUBLIC page)
+  // ============================================================
+  chapterMarker('ACT 13', 'Documentation Center');
 
   // --- /docs Overview ---
   await page.getByRole('link', { name: /Docs/i }).first().click();
@@ -617,364 +961,22 @@ test('MedOS Full Product Demo', async ({ page }) => {
   }
 
   // ============================================================
-  // ACT 11: PROJECT TRACKER (Sidebar #10)
-  // ============================================================
-  chapterMarker('ACT 11', 'Project Tracker');
-
-  // Docs may render in public layout (no dashboard sidebar) or dashboard layout depending on
-  // Next.js client-side routing behavior. Handle both cases.
-  const sidebarProject = page.locator('aside').getByRole('link', { name: /Project/i }).first();
-  if (await sidebarProject.isVisible({ timeout: 2_000 }).catch(() => false)) {
-    await sidebarProject.click();
-  } else {
-    // In public layout — click MedOS logo to go home, auto-redirect to dashboard, then click Project
-    await page.locator('a[href="/"]').first().click();
-    await page.waitForURL('**/dashboard', { timeout: 15_000 });
-    await page.waitForLoadState('networkidle');
-    await page.getByRole('link', { name: /Project/i }).first().click();
-  }
-  await page.waitForURL('**/project', { timeout: 10_000 });
-  await pauseForViewer(page, 2000, 'Project Tracker — Board view (Kanban)');
-
-  // Switch to List view
-  const listViewBtn = page.getByRole('button', { name: /List/i }).first();
-  if (await listViewBtn.isVisible().catch(() => false)) {
-    await listViewBtn.click();
-    await pauseForViewer(page, 2000, 'List view — 140 tasks sortable table');
-  }
-
-  // Switch to Timeline view
-  const timelineViewBtn = page.getByRole('button', { name: /Timeline/i }).first();
-  if (await timelineViewBtn.isVisible().catch(() => false)) {
-    await timelineViewBtn.click();
-    await pauseForViewer(page, 2000, 'Timeline view — sprint progress and milestones');
-  }
-
-  // Switch to Stats view
-  const statsViewBtn = page.getByRole('button', { name: /Stats/i }).first();
-  if (await statsViewBtn.isVisible().catch(() => false)) {
-    await statsViewBtn.click();
-    await pauseForViewer(page, 2000, 'Stats view — KPIs, velocity, EPIC progress');
-
-    // Scroll to EPIC Progress
-    const epicProgress = page.getByText('EPIC Progress').first();
-    if (await epicProgress.isVisible().catch(() => false)) {
-      await scrollToElement(page, 'text=EPIC Progress');
-      await pauseForViewer(page, 1500, 'EPIC progress bars — 14 EPICs');
-    }
-
-    // Scroll to Team Allocation
-    const teamAlloc = page.getByText('Team Allocation').first();
-    if (await teamAlloc.isVisible().catch(() => false)) {
-      await scrollToElement(page, 'text=Team Allocation');
-      await pauseForViewer(page, 1500, 'Team allocation — Person A vs B workload');
-    }
-  }
-
-  // ============================================================
-  // ACT 12: ADMIN HUB (Sidebar #11)
-  // ============================================================
-  chapterMarker('ACT 12', 'Admin Hub — Command Center');
-
-  await page.getByRole('link', { name: /Admin/i }).first().click();
-  await page.waitForURL('**/admin/dashboard', { timeout: 10_000 });
-  await pauseForViewer(page, 2500, 'Admin Dashboard — executive overview');
-
-  // System Health KPIs
-  const uptimeKpi = page.getByText('System Uptime').first();
-  if (await uptimeKpi.isVisible().catch(() => false)) {
-    await highlightElement(page, 'text=System Uptime', 1200);
-  }
-
-  // Scroll to MCP Server Health Grid
-  await scrollToElement(page, 'text=MCP Server Health');
-  await pauseForViewer(page, 1500, 'MCP Server Health Grid — 6 servers');
-
-  // Scroll to AI Agent Performance
-  await scrollToElement(page, 'text=AI Agent Performance');
-  await pauseForViewer(page, 1500, 'AI Agent Performance — confidence scores');
-
-  // Scroll to HIPAA Compliance snapshot
-  await scrollToElement(page, 'text=HIPAA Compliance');
-  await pauseForViewer(page, 1500, 'HIPAA Compliance — 94/100 score');
-
-  // Scroll to Cost Overview
-  await scrollToElement(page, 'text=Cost Overview');
-  await pauseForViewer(page, 1500, 'Cost Overview — $42/day, 84% of budget');
-
-  // Scroll to Recent Activity
-  await scrollToElement(page, 'text=Recent Activity');
-  await pauseForViewer(page, 1500, 'Recent Activity feed');
-
-  // --- Admin Monitoring ---
-  const monitoringLink = page.getByRole('link', { name: /Monitoring/i });
-  if (await monitoringLink.first().isVisible().catch(() => false)) {
-    await monitoringLink.first().click();
-  } else {
-    await page.locator('aside').last().getByRole('link', { name: /Monitoring/i }).first().click();
-  }
-  await page.waitForLoadState('networkidle');
-  await pauseForViewer(page, 2000, 'Monitoring — real-time metrics');
-
-  // Click Alerts tab
-  const monAlerts = page.getByRole('button', { name: /Alerts/i }).first();
-  if (await monAlerts.isVisible().catch(() => false)) {
-    await monAlerts.click();
-    await pauseForViewer(page, 1500, 'Active alerts — severity and actions');
-  }
-
-  // Click AI Observability tab
-  const aiObsTab = page.getByRole('button', { name: /AI Observ/i }).first();
-  if (await aiObsTab.isVisible().catch(() => false)) {
-    await aiObsTab.click();
-    await pauseForViewer(page, 1500, 'AI Observability — agent metrics and token usage');
-  }
-
-  // --- Admin Tenants ---
-  await page.locator('aside').last().getByRole('link', { name: /Tenants/i }).first().click();
-  await page.waitForLoadState('networkidle');
-  await page.waitForTimeout(500);
-  await pauseForViewer(page, 2000, 'Tenant Management — 3 practices');
-
-  // Click Onboarding tab
-  const onboardTab = page.getByRole('button', { name: /Onboarding/i }).first();
-  if (await onboardTab.isVisible().catch(() => false)) {
-    await onboardTab.click();
-    await pauseForViewer(page, 1500, 'Onboarding Wizard — 6-step practice setup');
-  }
-
-  // --- Admin Users ---
-  await page.locator('aside').last().getByRole('link', { name: /Users/i }).first().click();
-  await page.waitForLoadState('networkidle');
-  await page.waitForTimeout(500);
-  await pauseForViewer(page, 2000, 'User & Role Management — 6 users');
-
-  // Click Roles tab
-  const rolesTab = page.getByRole('button', { name: /Roles/i }).first();
-  if (await rolesTab.isVisible().catch(() => false)) {
-    await rolesTab.click();
-    await pauseForViewer(page, 1500, 'RBAC Matrix — 11 permissions x 6 roles');
-  }
-
-  // --- Admin Billing ---
-  await page.locator('aside').last().getByRole('link', { name: /Billing/i }).first().click();
-  await page.waitForLoadState('networkidle');
-  await page.waitForTimeout(500);
-  await pauseForViewer(page, 2000, 'Billing Configuration — 3 payer contracts');
-
-  // Click Fee Schedules tab
-  const feeTab2 = page.getByRole('button', { name: /Fee Schedule/i }).first();
-  if (await feeTab2.isVisible().catch(() => false)) {
-    await feeTab2.click();
-    await pauseForViewer(page, 1500, 'Fee Schedules — CPT codes and payer rates');
-  }
-
-  // --- Admin Integrations ---
-  await page.locator('aside').last().getByRole('link', { name: /Integrations/i }).first().click();
-  await page.waitForLoadState('networkidle');
-  await page.waitForTimeout(500);
-  await pauseForViewer(page, 2000, 'Integration Management — EHR, Devices, Labs');
-
-  // Click Devices tab
-  const devicesIntTab = page.getByRole('button', { name: /Device/i }).first();
-  if (await devicesIntTab.isVisible().catch(() => false)) {
-    await devicesIntTab.click();
-    await pauseForViewer(page, 1500, 'Device Integrations — Oura, Apple Watch, Dexcom');
-  }
-
-  // --- Admin MCP Servers ---
-  await page.locator('aside').last().getByRole('link', { name: /MCP Servers/i }).first().click();
-  await page.waitForLoadState('networkidle');
-  await page.waitForTimeout(500);
-  await pauseForViewer(page, 2000, 'MCP Server Management — 6 servers, 44 tools');
-
-  // Click Tool Inventory tab
-  const toolInvTab = page.getByRole('button', { name: /Tool Inventory/i }).first();
-  if (await toolInvTab.isVisible().catch(() => false)) {
-    await toolInvTab.click();
-    await pauseForViewer(page, 1500, '44-tool inventory with PHI levels');
-  }
-
-  // --- Admin AI Agents ---
-  await page.locator('aside').last().getByRole('link', { name: /AI Agents/i }).first().click();
-  await page.waitForLoadState('networkidle');
-  await page.waitForTimeout(500);
-  await pauseForViewer(page, 2000, 'AI Agent Configuration — 3 active, 2 planned');
-
-  // Click Configuration tab
-  const configTab = page.getByRole('button', { name: /Configuration/i }).first();
-  if (await configTab.isVisible().catch(() => false)) {
-    await configTab.click();
-    await pauseForViewer(page, 1500, 'Agent parameters — confidence thresholds');
-  }
-
-  // --- Admin Security ---
-  await page.locator('aside').last().getByRole('link', { name: /Security/i }).first().click();
-  await page.waitForLoadState('networkidle');
-  await page.waitForTimeout(500);
-  await pauseForViewer(page, 2500, 'Security & HIPAA Compliance — 94/100');
-
-  // Click Audit Log tab
-  const auditTab = page.getByRole('button', { name: /Audit/i }).first();
-  if (await auditTab.isVisible().catch(() => false)) {
-    await auditTab.click();
-    await pauseForViewer(page, 1500, 'Audit Log — 15 entries, break-the-glass tracking');
-  }
-
-  // Click Encryption tab
-  const encTab = page.getByRole('button', { name: /Encryption/i }).first();
-  if (await encTab.isVisible().catch(() => false)) {
-    await encTab.click();
-    await pauseForViewer(page, 1500, 'Encryption Status — field-level + TDE + TLS');
-  }
-
-  // --- Admin Feature Flags ---
-  await page.locator('aside').last().getByRole('link', { name: /Feature Flags/i }).first().click();
-  await page.waitForLoadState('networkidle');
-  await page.waitForTimeout(500);
-  await pauseForViewer(page, 2000, 'Feature Flags — 22 flags across 4 categories');
-
-  // Scroll to see operational flags
-  await page.evaluate(() => window.scrollTo({ top: 800, behavior: 'smooth' }));
-  await pauseForViewer(page, 1500, 'Operational flags — maintenance mode, read-only');
-
-  // --- Admin System ---
-  await page.locator('aside').last().getByRole('link', { name: /System/i }).first().click();
-  await page.waitForLoadState('networkidle');
-  await page.waitForTimeout(500);
-  await pauseForViewer(page, 1500, 'System Configuration — cache, context, events');
-
-  // --- Admin Data Management ---
-  await page.locator('aside').last().getByRole('link', { name: /Data/i }).first().click();
-  await page.waitForLoadState('networkidle');
-  await page.waitForTimeout(500);
-  await pauseForViewer(page, 1500, 'Data Management — import, backup, retention');
-
-  // Click Backup tab
-  const backupTab = page.getByRole('button', { name: /Backup/i }).first();
-  if (await backupTab.isVisible().catch(() => false)) {
-    await backupTab.click();
-    await pauseForViewer(page, 1500, 'Backup & Recovery — RPO 15min, RTO 1h');
-  }
-
-  // --- Admin Project (migrated) ---
-  await page.locator('aside').last().getByRole('link', { name: /Project/i }).first().click();
-  await page.waitForLoadState('networkidle');
-  await page.waitForTimeout(500);
-  await pauseForViewer(page, 2000, 'Project Tracker in Admin — Kanban board');
-
-  // ============================================================
-  // ACT 13: THEORIA MEDICAL PILOT (Sidebar #12)
-  // ============================================================
-  chapterMarker('ACT 13', 'Theoria Medical — Post-Acute AI Platform');
-
-  // --- Clinical Operations ---
-  await page.getByRole('link', { name: /Theoria/i }).first().click();
-  await page.waitForLoadState('networkidle');
-  await page.waitForTimeout(500);
-  await pauseForViewer(page, 2000, 'Facility Console — Multi-site SNF dashboard');
-  // Click Patients tab
-  const patientsTab = page.getByRole('button', { name: /Patients/i }).first();
-  if (await patientsTab.isVisible().catch(() => false)) {
-    await patientsTab.click();
-    await pauseForViewer(page, 1500, 'Patient roster across all facilities');
-  }
-  // Click Staffing tab
-  const staffingTab = page.getByRole('button', { name: /Staffing/i }).first();
-  if (await staffingTab.isVisible().catch(() => false)) {
-    await staffingTab.click();
-    await pauseForViewer(page, 1500, 'Provider staffing & shift coverage');
-  }
-
-  await page.locator('aside').last().getByRole('link', { name: /Shift Handoff/i }).first().click();
-  await page.waitForLoadState('networkidle');
-  await page.waitForTimeout(500);
-  await pauseForViewer(page, 2000, 'Shift Handoff — Priority-ranked briefing');
-
-  await page.locator('aside').last().getByRole('link', { name: /Post-Acute Guardian/i }).first().click();
-  await page.waitForLoadState('networkidle');
-  await page.waitForTimeout(500);
-  await pauseForViewer(page, 2000, 'Post-Acute Guardian — Live wearable monitoring');
-  const alertQueueTab = page.getByRole('button', { name: /Alert/i }).first();
-  if (await alertQueueTab.isVisible().catch(() => false)) {
-    await alertQueueTab.click();
-    await pauseForViewer(page, 1500, 'Alert Queue — AI-powered triage');
-  }
-
-  await page.locator('aside').last().getByRole('link', { name: /Readmission/i }).first().click();
-  await page.waitForLoadState('networkidle');
-  await page.waitForTimeout(500);
-  await pauseForViewer(page, 2000, 'Readmission Risk — Predictive scoring');
-
-  // --- Revenue Capture ---
-  await page.locator('aside').last().getByRole('link', { name: /CCM/i }).first().click();
-  await page.waitForLoadState('networkidle');
-  await page.waitForTimeout(500);
-  await pauseForViewer(page, 2000, 'CCM Time Tracker — CPT 99490 billing');
-  const billingTab = page.getByRole('button', { name: /Billing/i }).first();
-  if (await billingTab.isVisible().catch(() => false)) {
-    await billingTab.click();
-    await pauseForViewer(page, 1500, 'Billing threshold — revenue capture');
-  }
-
-  await page.locator('aside').last().getByRole('link', { name: /RPM/i }).first().click();
-  await page.waitForLoadState('networkidle');
-  await page.waitForTimeout(500);
-  await pauseForViewer(page, 2000, 'RPM Revenue — Device billing dashboard');
-
-  await page.locator('aside').last().getByRole('link', { name: /Care Gap/i }).first().click();
-  await page.waitForLoadState('networkidle');
-  await page.waitForTimeout(500);
-  await pauseForViewer(page, 2000, 'Care Gap Scanner — Population health');
-
-  // --- Data Intelligence ---
-  await page.locator('aside').last().getByRole('link', { name: /Discharge/i }).first().click();
-  await page.waitForLoadState('networkidle');
-  await page.waitForTimeout(500);
-  await pauseForViewer(page, 2000, 'Discharge Reconciliation — Hospital-SNF bridge');
-  const medChangesTab = page.getByRole('button', { name: /Med/i }).first();
-  if (await medChangesTab.isVisible().catch(() => false)) {
-    await medChangesTab.click();
-    await pauseForViewer(page, 1500, 'Medication comparison — ChartEasy integration');
-  }
-
-  await page.locator('aside').last().getByRole('link', { name: /Care Plan/i }).first().click();
-  await page.waitForLoadState('networkidle');
-  await page.waitForTimeout(500);
-  await pauseForViewer(page, 2000, 'Care Plan Optimizer — AI recommendations');
-
-  await page.locator('aside').last().getByRole('link', { name: /Staffing/i }).first().click();
-  await page.waitForLoadState('networkidle');
-  await page.waitForTimeout(500);
-  await pauseForViewer(page, 2000, 'Staffing Optimizer — Dynamic allocation');
-
-  // --- Enterprise & Governance ---
-  await page.locator('aside').last().getByRole('link', { name: /ACO REACH/i }).first().click();
-  await page.waitForLoadState('networkidle');
-  await page.waitForTimeout(500);
-  await pauseForViewer(page, 2000, 'ACO REACH — Empassion Health quality tracking');
-
-  await page.locator('aside').last().getByRole('link', { name: /PE Executive/i }).first().click();
-  await page.waitForLoadState('networkidle');
-  await page.waitForTimeout(500);
-  await pauseForViewer(page, 2000, 'PE Executive Dashboard — Amulet Capital reporting');
-  const financialTab = page.getByRole('button', { name: /Financial/i }).first();
-  if (await financialTab.isVisible().catch(() => false)) {
-    await financialTab.click();
-    await pauseForViewer(page, 1500, 'Financial Roll-up — Platform value creation');
-  }
-
-  await page.locator('aside').last().getByRole('link', { name: /Credentialing/i }).first().click();
-  await page.waitForLoadState('networkidle');
-  await page.waitForTimeout(500);
-  await pauseForViewer(page, 2000, 'Credentialing Center — 21-state licensing');
-
-  // ============================================================
   // ACT 14: SETTINGS + SUB-PAGES (Sidebar #13)
   // ============================================================
   chapterMarker('ACT 14', 'Settings & Configuration');
 
-  await page.getByRole('link', { name: /Settings/i }).first().click();
+  // After Docs (public layout), we may not have the dashboard sidebar.
+  // Handle both cases: sidebar visible or need to navigate back to dashboard first.
+  const sidebarSettings = page.locator('aside').getByRole('link', { name: /Settings/i }).first();
+  if (await sidebarSettings.isVisible({ timeout: 2_000 }).catch(() => false)) {
+    await sidebarSettings.click();
+  } else {
+    // In public layout — click MedOS logo to go home, auto-redirect to dashboard, then click Settings
+    await page.locator('a[href="/"]').first().click();
+    await page.waitForURL('**/dashboard', { timeout: 15_000 });
+    await page.waitForLoadState('networkidle');
+    await page.getByRole('link', { name: /Settings/i }).first().click();
+  }
   await page.waitForURL('**/settings', { timeout: 10_000 });
   await pauseForViewer(page, 1500, 'Settings — profile and preferences');
 
