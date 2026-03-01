@@ -4,7 +4,7 @@ import {
   scrollToElement,
   highlightElement,
   chapterMarker,
-  navigateTo,
+  clickNavLink,
 } from './helpers';
 
 test('MedOS Full Product Demo', async ({ page }) => {
@@ -17,9 +17,9 @@ test('MedOS Full Product Demo', async ({ page }) => {
   await pauseForViewer(page, 2000, 'Landing page — healthcare OS');
 
   // Highlight feature cards on login screen
-  const featureCard = page.getByText('AI-Powered Clinical Notes').first();
+  const featureCard = page.getByText('10 AI Agents').first();
   if (await featureCard.isVisible().catch(() => false)) {
-    await highlightElement(page, 'text=AI-Powered Clinical Notes', 1500);
+    await highlightElement(page, 'text=10 AI Agents', 1500);
   }
 
   // Fill login credentials
@@ -99,13 +99,9 @@ test('MedOS Full Product Demo', async ({ page }) => {
     await pauseForViewer(page, 500, 'Search cleared');
   }
 
-  // Click on Robert Chen to open patient detail
-  const robertLink = page.getByRole('link', { name: /Robert Chen/i }).first();
-  if (await robertLink.isVisible().catch(() => false)) {
-    await robertLink.click();
-  } else {
-    await navigateTo(page, '/patients/p-004');
-  }
+  // Click on Robert Chen to open patient detail (table row uses onClick + router.push, not <a>)
+  const robertRow = page.locator('tr', { hasText: 'Robert Chen' }).first();
+  await robertRow.click({ force: true });
   await page.waitForLoadState('networkidle');
   await pauseForViewer(page, 1500, 'Patient detail — Robert Chen');
 
@@ -262,7 +258,7 @@ test('MedOS Full Product Demo', async ({ page }) => {
   if (await priorAuthLink.isVisible().catch(() => false)) {
     await priorAuthLink.click();
   } else {
-    await navigateTo(page, '/claims/prior-auth');
+    await page.locator('a[href="/claims/prior-auth"]').first().click();
   }
   await page.waitForLoadState('networkidle');
   await pauseForViewer(page, 2000, 'Prior Authorization Tracking');
@@ -289,12 +285,11 @@ test('MedOS Full Product Demo', async ({ page }) => {
   }
 
   // --- Denials sub-page ---
-  const denialsLink = page.getByRole('link', { name: /Denials/i }).first();
-  if (await denialsLink.isVisible().catch(() => false)) {
-    await denialsLink.click();
-  } else {
-    await navigateTo(page, '/claims/denials');
-  }
+  // Navigate back to claims main first (sub-page links only exist on main claims page)
+  await page.getByRole('link', { name: /Claims/i }).first().click();
+  await page.waitForLoadState('networkidle');
+  await page.waitForTimeout(300);
+  await page.locator('a[href="/claims/denials"]').first().click();
   await page.waitForLoadState('networkidle');
   await pauseForViewer(page, 2000, 'Denial Management Dashboard');
 
@@ -324,12 +319,11 @@ test('MedOS Full Product Demo', async ({ page }) => {
   }
 
   // --- Claims Analytics sub-page ---
-  const analyticsClaimsLink = page.locator('main').getByRole('link', { name: /Analytics/i }).first();
-  if (await analyticsClaimsLink.isVisible().catch(() => false)) {
-    await analyticsClaimsLink.click();
-  } else {
-    await navigateTo(page, '/claims/analytics');
-  }
+  // Navigate back to claims main first (sub-page links only exist on main claims page)
+  await page.getByRole('link', { name: /Claims/i }).first().click();
+  await page.waitForLoadState('networkidle');
+  await page.waitForTimeout(300);
+  await page.locator('a[href="/claims/analytics"]').first().click();
   await page.waitForLoadState('networkidle');
   await pauseForViewer(page, 2000, 'Claims Analytics — financial KPIs');
 
@@ -455,7 +449,7 @@ test('MedOS Full Product Demo', async ({ page }) => {
   if (await docsApiLink.first().isVisible().catch(() => false)) {
     await docsApiLink.first().click();
   } else {
-    await navigateTo(page, '/docs/api');
+    await page.locator('a[href="/docs/api"]').first().click();
   }
   await page.waitForLoadState('networkidle');
   await pauseForViewer(page, 2000, 'API Reference — 26 endpoints');
@@ -506,7 +500,7 @@ test('MedOS Full Product Demo', async ({ page }) => {
   if (await docsAgentsLink.first().isVisible().catch(() => false)) {
     await docsAgentsLink.first().click();
   } else {
-    await navigateTo(page, '/docs/agents');
+    await page.locator('a[href="/docs/agents"]').first().click();
   }
   await page.waitForLoadState('networkidle');
   await pauseForViewer(page, 2000, 'Agent Workflows — LangGraph state machines');
@@ -542,7 +536,7 @@ test('MedOS Full Product Demo', async ({ page }) => {
   if (await docsMcpLink.first().isVisible().catch(() => false)) {
     await docsMcpLink.first().click();
   } else {
-    await navigateTo(page, '/docs/mcp');
+    await page.locator('a[href="/docs/mcp"]').first().click();
   }
   await page.waitForLoadState('networkidle');
   await pauseForViewer(page, 2000, 'MCP Protocol — 32 tools across 4 servers');
@@ -589,7 +583,7 @@ test('MedOS Full Product Demo', async ({ page }) => {
   if (await docsSecLink.first().isVisible().catch(() => false)) {
     await docsSecLink.first().click();
   } else {
-    await navigateTo(page, '/docs/security');
+    await page.locator('a[href="/docs/security"]').first().click();
   }
   await page.waitForLoadState('networkidle');
   await pauseForViewer(page, 2000, 'Security Pipeline — HIPAA compliance');
@@ -627,6 +621,8 @@ test('MedOS Full Product Demo', async ({ page }) => {
   // ============================================================
   chapterMarker('ACT 11', 'Project Tracker');
 
+  // Docs is now in (public) group but client-side nav from dashboard sidebar keeps dashboard layout.
+  // Just click Project in the main sidebar to navigate within the dashboard context.
   await page.getByRole('link', { name: /Project/i }).first().click();
   await page.waitForURL('**/project', { timeout: 10_000 });
   await pauseForViewer(page, 2000, 'Project Tracker — Board view (Kanban)');
@@ -706,7 +702,7 @@ test('MedOS Full Product Demo', async ({ page }) => {
   if (await monitoringLink.first().isVisible().catch(() => false)) {
     await monitoringLink.first().click();
   } else {
-    await navigateTo(page, '/admin/monitoring');
+    await page.locator('aside').last().getByRole('link', { name: /Monitoring/i }).first().click();
   }
   await page.waitForLoadState('networkidle');
   await pauseForViewer(page, 2000, 'Monitoring — real-time metrics');
@@ -726,7 +722,9 @@ test('MedOS Full Product Demo', async ({ page }) => {
   }
 
   // --- Admin Tenants ---
-  await navigateTo(page, '/admin/tenants');
+  await page.locator('aside').last().getByRole('link', { name: /Tenants/i }).first().click();
+  await page.waitForLoadState('networkidle');
+  await page.waitForTimeout(500);
   await pauseForViewer(page, 2000, 'Tenant Management — 3 practices');
 
   // Click Onboarding tab
@@ -737,7 +735,9 @@ test('MedOS Full Product Demo', async ({ page }) => {
   }
 
   // --- Admin Users ---
-  await navigateTo(page, '/admin/users');
+  await page.locator('aside').last().getByRole('link', { name: /Users/i }).first().click();
+  await page.waitForLoadState('networkidle');
+  await page.waitForTimeout(500);
   await pauseForViewer(page, 2000, 'User & Role Management — 6 users');
 
   // Click Roles tab
@@ -748,7 +748,9 @@ test('MedOS Full Product Demo', async ({ page }) => {
   }
 
   // --- Admin Billing ---
-  await navigateTo(page, '/admin/billing');
+  await page.locator('aside').last().getByRole('link', { name: /Billing/i }).first().click();
+  await page.waitForLoadState('networkidle');
+  await page.waitForTimeout(500);
   await pauseForViewer(page, 2000, 'Billing Configuration — 3 payer contracts');
 
   // Click Fee Schedules tab
@@ -759,7 +761,9 @@ test('MedOS Full Product Demo', async ({ page }) => {
   }
 
   // --- Admin Integrations ---
-  await navigateTo(page, '/admin/integrations');
+  await page.locator('aside').last().getByRole('link', { name: /Integrations/i }).first().click();
+  await page.waitForLoadState('networkidle');
+  await page.waitForTimeout(500);
   await pauseForViewer(page, 2000, 'Integration Management — EHR, Devices, Labs');
 
   // Click Devices tab
@@ -770,7 +774,9 @@ test('MedOS Full Product Demo', async ({ page }) => {
   }
 
   // --- Admin MCP Servers ---
-  await navigateTo(page, '/admin/mcp');
+  await page.locator('aside').last().getByRole('link', { name: /MCP Servers/i }).first().click();
+  await page.waitForLoadState('networkidle');
+  await page.waitForTimeout(500);
   await pauseForViewer(page, 2000, 'MCP Server Management — 6 servers, 44 tools');
 
   // Click Tool Inventory tab
@@ -781,7 +787,9 @@ test('MedOS Full Product Demo', async ({ page }) => {
   }
 
   // --- Admin AI Agents ---
-  await navigateTo(page, '/admin/agents');
+  await page.locator('aside').last().getByRole('link', { name: /AI Agents/i }).first().click();
+  await page.waitForLoadState('networkidle');
+  await page.waitForTimeout(500);
   await pauseForViewer(page, 2000, 'AI Agent Configuration — 3 active, 2 planned');
 
   // Click Configuration tab
@@ -792,7 +800,9 @@ test('MedOS Full Product Demo', async ({ page }) => {
   }
 
   // --- Admin Security ---
-  await navigateTo(page, '/admin/security');
+  await page.locator('aside').last().getByRole('link', { name: /Security/i }).first().click();
+  await page.waitForLoadState('networkidle');
+  await page.waitForTimeout(500);
   await pauseForViewer(page, 2500, 'Security & HIPAA Compliance — 94/100');
 
   // Click Audit Log tab
@@ -810,7 +820,9 @@ test('MedOS Full Product Demo', async ({ page }) => {
   }
 
   // --- Admin Feature Flags ---
-  await navigateTo(page, '/admin/features');
+  await page.locator('aside').last().getByRole('link', { name: /Feature Flags/i }).first().click();
+  await page.waitForLoadState('networkidle');
+  await page.waitForTimeout(500);
   await pauseForViewer(page, 2000, 'Feature Flags — 22 flags across 4 categories');
 
   // Scroll to see operational flags
@@ -818,11 +830,15 @@ test('MedOS Full Product Demo', async ({ page }) => {
   await pauseForViewer(page, 1500, 'Operational flags — maintenance mode, read-only');
 
   // --- Admin System ---
-  await navigateTo(page, '/admin/system');
+  await page.locator('aside').last().getByRole('link', { name: /System/i }).first().click();
+  await page.waitForLoadState('networkidle');
+  await page.waitForTimeout(500);
   await pauseForViewer(page, 1500, 'System Configuration — cache, context, events');
 
   // --- Admin Data Management ---
-  await navigateTo(page, '/admin/data');
+  await page.locator('aside').last().getByRole('link', { name: /Data/i }).first().click();
+  await page.waitForLoadState('networkidle');
+  await page.waitForTimeout(500);
   await pauseForViewer(page, 1500, 'Data Management — import, backup, retention');
 
   // Click Backup tab
@@ -833,7 +849,9 @@ test('MedOS Full Product Demo', async ({ page }) => {
   }
 
   // --- Admin Project (migrated) ---
-  await navigateTo(page, '/admin/project');
+  await page.locator('aside').last().getByRole('link', { name: /Project/i }).first().click();
+  await page.waitForLoadState('networkidle');
+  await page.waitForTimeout(500);
   await pauseForViewer(page, 2000, 'Project Tracker in Admin — Kanban board');
 
   // ============================================================
@@ -842,7 +860,9 @@ test('MedOS Full Product Demo', async ({ page }) => {
   chapterMarker('ACT 13', 'Theoria Medical — Post-Acute AI Platform');
 
   // --- Clinical Operations ---
-  await navigateTo(page, '/theoria/facility');
+  await page.getByRole('link', { name: /Theoria/i }).first().click();
+  await page.waitForLoadState('networkidle');
+  await page.waitForTimeout(500);
   await pauseForViewer(page, 2000, 'Facility Console — Multi-site SNF dashboard');
   // Click Patients tab
   const patientsTab = page.getByRole('button', { name: /Patients/i }).first();
@@ -857,10 +877,14 @@ test('MedOS Full Product Demo', async ({ page }) => {
     await pauseForViewer(page, 1500, 'Provider staffing & shift coverage');
   }
 
-  await navigateTo(page, '/theoria/shift-handoff');
+  await page.locator('aside').last().getByRole('link', { name: /Shift Handoff/i }).first().click();
+  await page.waitForLoadState('networkidle');
+  await page.waitForTimeout(500);
   await pauseForViewer(page, 2000, 'Shift Handoff — Priority-ranked briefing');
 
-  await navigateTo(page, '/theoria/guardian');
+  await page.locator('aside').last().getByRole('link', { name: /Post-Acute Guardian/i }).first().click();
+  await page.waitForLoadState('networkidle');
+  await page.waitForTimeout(500);
   await pauseForViewer(page, 2000, 'Post-Acute Guardian — Live wearable monitoring');
   const alertQueueTab = page.getByRole('button', { name: /Alert/i }).first();
   if (await alertQueueTab.isVisible().catch(() => false)) {
@@ -868,11 +892,15 @@ test('MedOS Full Product Demo', async ({ page }) => {
     await pauseForViewer(page, 1500, 'Alert Queue — AI-powered triage');
   }
 
-  await navigateTo(page, '/theoria/readmission');
+  await page.locator('aside').last().getByRole('link', { name: /Readmission/i }).first().click();
+  await page.waitForLoadState('networkidle');
+  await page.waitForTimeout(500);
   await pauseForViewer(page, 2000, 'Readmission Risk — Predictive scoring');
 
   // --- Revenue Capture ---
-  await navigateTo(page, '/theoria/ccm');
+  await page.locator('aside').last().getByRole('link', { name: /CCM/i }).first().click();
+  await page.waitForLoadState('networkidle');
+  await page.waitForTimeout(500);
   await pauseForViewer(page, 2000, 'CCM Time Tracker — CPT 99490 billing');
   const billingTab = page.getByRole('button', { name: /Billing/i }).first();
   if (await billingTab.isVisible().catch(() => false)) {
@@ -880,14 +908,20 @@ test('MedOS Full Product Demo', async ({ page }) => {
     await pauseForViewer(page, 1500, 'Billing threshold — revenue capture');
   }
 
-  await navigateTo(page, '/theoria/rpm');
+  await page.locator('aside').last().getByRole('link', { name: /RPM/i }).first().click();
+  await page.waitForLoadState('networkidle');
+  await page.waitForTimeout(500);
   await pauseForViewer(page, 2000, 'RPM Revenue — Device billing dashboard');
 
-  await navigateTo(page, '/theoria/care-gaps');
+  await page.locator('aside').last().getByRole('link', { name: /Care Gap/i }).first().click();
+  await page.waitForLoadState('networkidle');
+  await page.waitForTimeout(500);
   await pauseForViewer(page, 2000, 'Care Gap Scanner — Population health');
 
   // --- Data Intelligence ---
-  await navigateTo(page, '/theoria/discharge');
+  await page.locator('aside').last().getByRole('link', { name: /Discharge/i }).first().click();
+  await page.waitForLoadState('networkidle');
+  await page.waitForTimeout(500);
   await pauseForViewer(page, 2000, 'Discharge Reconciliation — Hospital-SNF bridge');
   const medChangesTab = page.getByRole('button', { name: /Med/i }).first();
   if (await medChangesTab.isVisible().catch(() => false)) {
@@ -895,17 +929,25 @@ test('MedOS Full Product Demo', async ({ page }) => {
     await pauseForViewer(page, 1500, 'Medication comparison — ChartEasy integration');
   }
 
-  await navigateTo(page, '/theoria/care-plans');
+  await page.locator('aside').last().getByRole('link', { name: /Care Plan/i }).first().click();
+  await page.waitForLoadState('networkidle');
+  await page.waitForTimeout(500);
   await pauseForViewer(page, 2000, 'Care Plan Optimizer — AI recommendations');
 
-  await navigateTo(page, '/theoria/staffing');
+  await page.locator('aside').last().getByRole('link', { name: /Staffing/i }).first().click();
+  await page.waitForLoadState('networkidle');
+  await page.waitForTimeout(500);
   await pauseForViewer(page, 2000, 'Staffing Optimizer — Dynamic allocation');
 
   // --- Enterprise & Governance ---
-  await navigateTo(page, '/theoria/aco-reach');
+  await page.locator('aside').last().getByRole('link', { name: /ACO REACH/i }).first().click();
+  await page.waitForLoadState('networkidle');
+  await page.waitForTimeout(500);
   await pauseForViewer(page, 2000, 'ACO REACH — Empassion Health quality tracking');
 
-  await navigateTo(page, '/theoria/executive');
+  await page.locator('aside').last().getByRole('link', { name: /PE Executive/i }).first().click();
+  await page.waitForLoadState('networkidle');
+  await page.waitForTimeout(500);
   await pauseForViewer(page, 2000, 'PE Executive Dashboard — Amulet Capital reporting');
   const financialTab = page.getByRole('button', { name: /Financial/i }).first();
   if (await financialTab.isVisible().catch(() => false)) {
@@ -913,7 +955,9 @@ test('MedOS Full Product Demo', async ({ page }) => {
     await pauseForViewer(page, 1500, 'Financial Roll-up — Platform value creation');
   }
 
-  await navigateTo(page, '/theoria/credentialing');
+  await page.locator('aside').last().getByRole('link', { name: /Credentialing/i }).first().click();
+  await page.waitForLoadState('networkidle');
+  await page.waitForTimeout(500);
   await pauseForViewer(page, 2000, 'Credentialing Center — 21-state licensing');
 
   // ============================================================
@@ -993,8 +1037,13 @@ test('MedOS Full Product Demo', async ({ page }) => {
     }
   }
 
-  // Navigate to Onboarding Wizard
-  await navigateTo(page, '/settings/onboarding');
+  // Navigate to Onboarding Wizard — go back to settings main first
+  await page.getByRole('link', { name: /Settings/i }).first().click();
+  await page.waitForLoadState('networkidle');
+  await page.waitForTimeout(300);
+  await page.locator('a[href="/settings/onboarding"]').first().click();
+  await page.waitForLoadState('networkidle');
+  await page.waitForTimeout(500);
   await pauseForViewer(page, 2000, 'Onboarding Wizard — multi-step practice setup');
 
   // Look for wizard steps / next button
@@ -1016,7 +1065,12 @@ test('MedOS Full Product Demo', async ({ page }) => {
   await pauseForViewer(page, 1500, 'Onboarding steps overview');
 
   // --- /settings/devices — Device Management ---
-  await navigateTo(page, '/settings/devices');
+  await page.getByRole('link', { name: /Settings/i }).first().click();
+  await page.waitForLoadState('networkidle');
+  await page.waitForTimeout(300);
+  await page.locator('a[href="/settings/devices"]').first().click();
+  await page.waitForLoadState('networkidle');
+  await page.waitForTimeout(500);
   await pauseForViewer(page, 2000, 'Device Management — registered wearables');
 
   // Click Readings tab
@@ -1034,7 +1088,12 @@ test('MedOS Full Product Demo', async ({ page }) => {
   }
 
   // --- /settings/context — Context Freshness Monitor ---
-  await navigateTo(page, '/settings/context');
+  await page.getByRole('link', { name: /Settings/i }).first().click();
+  await page.waitForLoadState('networkidle');
+  await page.waitForTimeout(300);
+  await page.locator('a[href="/settings/context"]').first().click();
+  await page.waitForLoadState('networkidle');
+  await page.waitForTimeout(500);
   await pauseForViewer(page, 2000, 'Context Freshness — patient data staleness monitoring');
 
   // Click System Contexts tab
@@ -1059,7 +1118,12 @@ test('MedOS Full Product Demo', async ({ page }) => {
   }
 
   // --- /settings/system — System Health ---
-  await navigateTo(page, '/settings/system');
+  await page.getByRole('link', { name: /Settings/i }).first().click();
+  await page.waitForLoadState('networkidle');
+  await page.waitForTimeout(300);
+  await page.locator('a[href="/settings/system"]').first().click();
+  await page.waitForLoadState('networkidle');
+  await page.waitForTimeout(500);
   await pauseForViewer(page, 2000, 'System Health — platform overview (44 MCP tools, 3 agents)');
 
   // Click MCP Inventory tab

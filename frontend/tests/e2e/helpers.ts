@@ -75,6 +75,22 @@ export function chapterMarker(act: string, title: string) {
 }
 
 /**
+ * Click a navigation link within a specific scope (sidebar, aside, or page).
+ * Uses actual DOM <Link> elements so navigation is client-side (no reload).
+ */
+export async function clickNavLink(page: Page, label: string | RegExp, scope?: string) {
+  const container = scope ? page.locator(scope) : page;
+  const link = container.getByRole('link', { name: label }).first();
+  await link.click();
+  await page.waitForLoadState('networkidle');
+  await page.waitForTimeout(500);
+}
+
+/**
+ * @deprecated Use clickNavLink() or direct locator clicks instead.
+ * This function creates a raw <a> tag which causes a full page reload,
+ * losing sessionStorage auth state momentarily.
+ *
  * Navigate to a path using client-side navigation (preserves auth state).
  * Falls back to clicking a sidebar/page link if available.
  */
