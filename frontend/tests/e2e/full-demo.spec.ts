@@ -323,7 +323,7 @@ test('MedOS Full Product Demo', async ({ page }) => {
   }
 
   // --- Claims Analytics sub-page ---
-  const analyticsClaimsLink = page.getByRole('link', { name: /Analytics/i }).first();
+  const analyticsClaimsLink = page.locator('main').getByRole('link', { name: /Analytics/i }).first();
   if (await analyticsClaimsLink.isVisible().catch(() => false)) {
     await analyticsClaimsLink.click();
   } else {
