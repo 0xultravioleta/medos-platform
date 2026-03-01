@@ -20,6 +20,7 @@ import {
   ChevronLeft,
   BookOpen,
   Target,
+  LayoutGrid,
 } from "lucide-react";
 
 const NAV_ITEMS = [
@@ -32,6 +33,7 @@ const NAV_ITEMS = [
   { label: "Analytics", href: "/analytics", icon: BarChart3 },
   { label: "Pilot", href: "/pilot", icon: Target },
   { label: "Docs", href: "/docs", icon: BookOpen },
+  { label: "Project", href: "/project", icon: LayoutGrid },
   { label: "Settings", href: "/settings", icon: Settings },
 ];
 
