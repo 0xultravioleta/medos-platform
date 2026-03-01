@@ -4,6 +4,7 @@ import {
   scrollToElement,
   highlightElement,
   chapterMarker,
+  navigateTo,
 } from './helpers';
 
 test('MedOS Full Product Demo', async ({ page }) => {
@@ -103,7 +104,7 @@ test('MedOS Full Product Demo', async ({ page }) => {
   if (await robertLink.isVisible().catch(() => false)) {
     await robertLink.click();
   } else {
-    await page.goto('/patients/p-004');
+    await navigateTo(page, '/patients/p-004');
   }
   await page.waitForLoadState('networkidle');
   await pauseForViewer(page, 1500, 'Patient detail — Robert Chen');
@@ -261,7 +262,7 @@ test('MedOS Full Product Demo', async ({ page }) => {
   if (await priorAuthLink.isVisible().catch(() => false)) {
     await priorAuthLink.click();
   } else {
-    await page.goto('/claims/prior-auth');
+    await navigateTo(page, '/claims/prior-auth');
   }
   await page.waitForLoadState('networkidle');
   await pauseForViewer(page, 2000, 'Prior Authorization Tracking');
@@ -292,7 +293,7 @@ test('MedOS Full Product Demo', async ({ page }) => {
   if (await denialsLink.isVisible().catch(() => false)) {
     await denialsLink.click();
   } else {
-    await page.goto('/claims/denials');
+    await navigateTo(page, '/claims/denials');
   }
   await page.waitForLoadState('networkidle');
   await pauseForViewer(page, 2000, 'Denial Management Dashboard');
@@ -327,7 +328,7 @@ test('MedOS Full Product Demo', async ({ page }) => {
   if (await analyticsClaimsLink.isVisible().catch(() => false)) {
     await analyticsClaimsLink.click();
   } else {
-    await page.goto('/claims/analytics');
+    await navigateTo(page, '/claims/analytics');
   }
   await page.waitForLoadState('networkidle');
   await pauseForViewer(page, 2000, 'Claims Analytics — financial KPIs');
@@ -454,7 +455,7 @@ test('MedOS Full Product Demo', async ({ page }) => {
   if (await docsApiLink.first().isVisible().catch(() => false)) {
     await docsApiLink.first().click();
   } else {
-    await page.goto('/docs/api');
+    await navigateTo(page, '/docs/api');
   }
   await page.waitForLoadState('networkidle');
   await pauseForViewer(page, 2000, 'API Reference — 26 endpoints');
@@ -505,7 +506,7 @@ test('MedOS Full Product Demo', async ({ page }) => {
   if (await docsAgentsLink.first().isVisible().catch(() => false)) {
     await docsAgentsLink.first().click();
   } else {
-    await page.goto('/docs/agents');
+    await navigateTo(page, '/docs/agents');
   }
   await page.waitForLoadState('networkidle');
   await pauseForViewer(page, 2000, 'Agent Workflows — LangGraph state machines');
@@ -541,7 +542,7 @@ test('MedOS Full Product Demo', async ({ page }) => {
   if (await docsMcpLink.first().isVisible().catch(() => false)) {
     await docsMcpLink.first().click();
   } else {
-    await page.goto('/docs/mcp');
+    await navigateTo(page, '/docs/mcp');
   }
   await page.waitForLoadState('networkidle');
   await pauseForViewer(page, 2000, 'MCP Protocol — 32 tools across 4 servers');
@@ -588,7 +589,7 @@ test('MedOS Full Product Demo', async ({ page }) => {
   if (await docsSecLink.first().isVisible().catch(() => false)) {
     await docsSecLink.first().click();
   } else {
-    await page.goto('/docs/security');
+    await navigateTo(page, '/docs/security');
   }
   await page.waitForLoadState('networkidle');
   await pauseForViewer(page, 2000, 'Security Pipeline — HIPAA compliance');
@@ -705,7 +706,7 @@ test('MedOS Full Product Demo', async ({ page }) => {
   if (await monitoringLink.first().isVisible().catch(() => false)) {
     await monitoringLink.first().click();
   } else {
-    await page.goto('/admin/monitoring');
+    await navigateTo(page, '/admin/monitoring');
   }
   await page.waitForLoadState('networkidle');
   await pauseForViewer(page, 2000, 'Monitoring — real-time metrics');
@@ -725,8 +726,7 @@ test('MedOS Full Product Demo', async ({ page }) => {
   }
 
   // --- Admin Tenants ---
-  await page.goto('/admin/tenants');
-  await page.waitForLoadState('networkidle');
+  await navigateTo(page, '/admin/tenants');
   await pauseForViewer(page, 2000, 'Tenant Management — 3 practices');
 
   // Click Onboarding tab
@@ -737,8 +737,7 @@ test('MedOS Full Product Demo', async ({ page }) => {
   }
 
   // --- Admin Users ---
-  await page.goto('/admin/users');
-  await page.waitForLoadState('networkidle');
+  await navigateTo(page, '/admin/users');
   await pauseForViewer(page, 2000, 'User & Role Management — 6 users');
 
   // Click Roles tab
@@ -749,8 +748,7 @@ test('MedOS Full Product Demo', async ({ page }) => {
   }
 
   // --- Admin Billing ---
-  await page.goto('/admin/billing');
-  await page.waitForLoadState('networkidle');
+  await navigateTo(page, '/admin/billing');
   await pauseForViewer(page, 2000, 'Billing Configuration — 3 payer contracts');
 
   // Click Fee Schedules tab
@@ -761,8 +759,7 @@ test('MedOS Full Product Demo', async ({ page }) => {
   }
 
   // --- Admin Integrations ---
-  await page.goto('/admin/integrations');
-  await page.waitForLoadState('networkidle');
+  await navigateTo(page, '/admin/integrations');
   await pauseForViewer(page, 2000, 'Integration Management — EHR, Devices, Labs');
 
   // Click Devices tab
@@ -773,8 +770,7 @@ test('MedOS Full Product Demo', async ({ page }) => {
   }
 
   // --- Admin MCP Servers ---
-  await page.goto('/admin/mcp');
-  await page.waitForLoadState('networkidle');
+  await navigateTo(page, '/admin/mcp');
   await pauseForViewer(page, 2000, 'MCP Server Management — 6 servers, 44 tools');
 
   // Click Tool Inventory tab
@@ -785,8 +781,7 @@ test('MedOS Full Product Demo', async ({ page }) => {
   }
 
   // --- Admin AI Agents ---
-  await page.goto('/admin/agents');
-  await page.waitForLoadState('networkidle');
+  await navigateTo(page, '/admin/agents');
   await pauseForViewer(page, 2000, 'AI Agent Configuration — 3 active, 2 planned');
 
   // Click Configuration tab
@@ -797,8 +792,7 @@ test('MedOS Full Product Demo', async ({ page }) => {
   }
 
   // --- Admin Security ---
-  await page.goto('/admin/security');
-  await page.waitForLoadState('networkidle');
+  await navigateTo(page, '/admin/security');
   await pauseForViewer(page, 2500, 'Security & HIPAA Compliance — 94/100');
 
   // Click Audit Log tab
@@ -816,8 +810,7 @@ test('MedOS Full Product Demo', async ({ page }) => {
   }
 
   // --- Admin Feature Flags ---
-  await page.goto('/admin/features');
-  await page.waitForLoadState('networkidle');
+  await navigateTo(page, '/admin/features');
   await pauseForViewer(page, 2000, 'Feature Flags — 22 flags across 4 categories');
 
   // Scroll to see operational flags
@@ -825,13 +818,11 @@ test('MedOS Full Product Demo', async ({ page }) => {
   await pauseForViewer(page, 1500, 'Operational flags — maintenance mode, read-only');
 
   // --- Admin System ---
-  await page.goto('/admin/system');
-  await page.waitForLoadState('networkidle');
+  await navigateTo(page, '/admin/system');
   await pauseForViewer(page, 1500, 'System Configuration — cache, context, events');
 
   // --- Admin Data Management ---
-  await page.goto('/admin/data');
-  await page.waitForLoadState('networkidle');
+  await navigateTo(page, '/admin/data');
   await pauseForViewer(page, 1500, 'Data Management — import, backup, retention');
 
   // Click Backup tab
@@ -842,8 +833,7 @@ test('MedOS Full Product Demo', async ({ page }) => {
   }
 
   // --- Admin Project (migrated) ---
-  await page.goto('/admin/project');
-  await page.waitForLoadState('networkidle');
+  await navigateTo(page, '/admin/project');
   await pauseForViewer(page, 2000, 'Project Tracker in Admin — Kanban board');
 
   // ============================================================
@@ -852,8 +842,7 @@ test('MedOS Full Product Demo', async ({ page }) => {
   chapterMarker('ACT 13', 'Theoria Medical — Post-Acute AI Platform');
 
   // --- Clinical Operations ---
-  await page.goto('/theoria/facility');
-  await page.waitForLoadState('networkidle');
+  await navigateTo(page, '/theoria/facility');
   await pauseForViewer(page, 2000, 'Facility Console — Multi-site SNF dashboard');
   // Click Patients tab
   const patientsTab = page.getByRole('button', { name: /Patients/i }).first();
@@ -868,12 +857,10 @@ test('MedOS Full Product Demo', async ({ page }) => {
     await pauseForViewer(page, 1500, 'Provider staffing & shift coverage');
   }
 
-  await page.goto('/theoria/shift-handoff');
-  await page.waitForLoadState('networkidle');
+  await navigateTo(page, '/theoria/shift-handoff');
   await pauseForViewer(page, 2000, 'Shift Handoff — Priority-ranked briefing');
 
-  await page.goto('/theoria/guardian');
-  await page.waitForLoadState('networkidle');
+  await navigateTo(page, '/theoria/guardian');
   await pauseForViewer(page, 2000, 'Post-Acute Guardian — Live wearable monitoring');
   const alertQueueTab = page.getByRole('button', { name: /Alert/i }).first();
   if (await alertQueueTab.isVisible().catch(() => false)) {
@@ -881,13 +868,11 @@ test('MedOS Full Product Demo', async ({ page }) => {
     await pauseForViewer(page, 1500, 'Alert Queue — AI-powered triage');
   }
 
-  await page.goto('/theoria/readmission');
-  await page.waitForLoadState('networkidle');
+  await navigateTo(page, '/theoria/readmission');
   await pauseForViewer(page, 2000, 'Readmission Risk — Predictive scoring');
 
   // --- Revenue Capture ---
-  await page.goto('/theoria/ccm');
-  await page.waitForLoadState('networkidle');
+  await navigateTo(page, '/theoria/ccm');
   await pauseForViewer(page, 2000, 'CCM Time Tracker — CPT 99490 billing');
   const billingTab = page.getByRole('button', { name: /Billing/i }).first();
   if (await billingTab.isVisible().catch(() => false)) {
@@ -895,17 +880,14 @@ test('MedOS Full Product Demo', async ({ page }) => {
     await pauseForViewer(page, 1500, 'Billing threshold — revenue capture');
   }
 
-  await page.goto('/theoria/rpm');
-  await page.waitForLoadState('networkidle');
+  await navigateTo(page, '/theoria/rpm');
   await pauseForViewer(page, 2000, 'RPM Revenue — Device billing dashboard');
 
-  await page.goto('/theoria/care-gaps');
-  await page.waitForLoadState('networkidle');
+  await navigateTo(page, '/theoria/care-gaps');
   await pauseForViewer(page, 2000, 'Care Gap Scanner — Population health');
 
   // --- Data Intelligence ---
-  await page.goto('/theoria/discharge');
-  await page.waitForLoadState('networkidle');
+  await navigateTo(page, '/theoria/discharge');
   await pauseForViewer(page, 2000, 'Discharge Reconciliation — Hospital-SNF bridge');
   const medChangesTab = page.getByRole('button', { name: /Med/i }).first();
   if (await medChangesTab.isVisible().catch(() => false)) {
@@ -913,21 +895,17 @@ test('MedOS Full Product Demo', async ({ page }) => {
     await pauseForViewer(page, 1500, 'Medication comparison — ChartEasy integration');
   }
 
-  await page.goto('/theoria/care-plans');
-  await page.waitForLoadState('networkidle');
+  await navigateTo(page, '/theoria/care-plans');
   await pauseForViewer(page, 2000, 'Care Plan Optimizer — AI recommendations');
 
-  await page.goto('/theoria/staffing');
-  await page.waitForLoadState('networkidle');
+  await navigateTo(page, '/theoria/staffing');
   await pauseForViewer(page, 2000, 'Staffing Optimizer — Dynamic allocation');
 
   // --- Enterprise & Governance ---
-  await page.goto('/theoria/aco-reach');
-  await page.waitForLoadState('networkidle');
+  await navigateTo(page, '/theoria/aco-reach');
   await pauseForViewer(page, 2000, 'ACO REACH — Empassion Health quality tracking');
 
-  await page.goto('/theoria/executive');
-  await page.waitForLoadState('networkidle');
+  await navigateTo(page, '/theoria/executive');
   await pauseForViewer(page, 2000, 'PE Executive Dashboard — Amulet Capital reporting');
   const financialTab = page.getByRole('button', { name: /Financial/i }).first();
   if (await financialTab.isVisible().catch(() => false)) {
@@ -935,8 +913,7 @@ test('MedOS Full Product Demo', async ({ page }) => {
     await pauseForViewer(page, 1500, 'Financial Roll-up — Platform value creation');
   }
 
-  await page.goto('/theoria/credentialing');
-  await page.waitForLoadState('networkidle');
+  await navigateTo(page, '/theoria/credentialing');
   await pauseForViewer(page, 2000, 'Credentialing Center — 21-state licensing');
 
   // ============================================================
@@ -1017,8 +994,7 @@ test('MedOS Full Product Demo', async ({ page }) => {
   }
 
   // Navigate to Onboarding Wizard
-  await page.goto('/settings/onboarding');
-  await page.waitForLoadState('networkidle');
+  await navigateTo(page, '/settings/onboarding');
   await pauseForViewer(page, 2000, 'Onboarding Wizard — multi-step practice setup');
 
   // Look for wizard steps / next button
@@ -1040,8 +1016,7 @@ test('MedOS Full Product Demo', async ({ page }) => {
   await pauseForViewer(page, 1500, 'Onboarding steps overview');
 
   // --- /settings/devices — Device Management ---
-  await page.goto('/settings/devices');
-  await page.waitForLoadState('networkidle');
+  await navigateTo(page, '/settings/devices');
   await pauseForViewer(page, 2000, 'Device Management — registered wearables');
 
   // Click Readings tab
@@ -1059,8 +1034,7 @@ test('MedOS Full Product Demo', async ({ page }) => {
   }
 
   // --- /settings/context — Context Freshness Monitor ---
-  await page.goto('/settings/context');
-  await page.waitForLoadState('networkidle');
+  await navigateTo(page, '/settings/context');
   await pauseForViewer(page, 2000, 'Context Freshness — patient data staleness monitoring');
 
   // Click System Contexts tab
@@ -1085,8 +1059,7 @@ test('MedOS Full Product Demo', async ({ page }) => {
   }
 
   // --- /settings/system — System Health ---
-  await page.goto('/settings/system');
-  await page.waitForLoadState('networkidle');
+  await navigateTo(page, '/settings/system');
   await pauseForViewer(page, 2000, 'System Health — platform overview (44 MCP tools, 3 agents)');
 
   // Click MCP Inventory tab
