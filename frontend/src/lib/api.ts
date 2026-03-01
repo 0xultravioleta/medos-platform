@@ -77,3 +77,69 @@ export async function getClaims() {
 export async function getAINotes() {
   return fetchAPI<Note[]>("/api/v1/notes");
 }
+
+// -- Approval types & API (Sprint 2 backend) --------------------------------
+
+export interface ApprovalTask {
+  task_id: string;
+  title: string;
+  agent_type: string;
+  status: string;
+  confidence: number | null;
+  resource_type: string;
+  created_at: string;
+  description: string;
+}
+
+export interface ApprovalStats {
+  total_tasks: number;
+  by_status: Record<string, number>;
+  by_agent_type: Record<string, number>;
+  pending_count: number;
+  avg_confidence: number;
+  oldest_pending: string | null;
+}
+
+export interface ApprovalDetail extends ApprovalTask {
+  confidence_detail: { score: number | null; requires_review: boolean | null; model_id: string | null };
+  resource_id: string;
+  payload: Record<string, unknown>;
+  reviewed_by: string | null;
+  reviewed_at: string | null;
+  review_notes: string | null;
+}
+
+export async function getApprovals(agentType?: string) {
+  const query = agentType ? `?agent_type=${agentType}` : "";
+  return fetchAPI<{ approvals: ApprovalTask[]; total: number }>(`/api/v1/approvals${query}`);
+}
+
+export async function getApprovalStats() {
+  return fetchAPI<ApprovalStats>("/api/v1/approvals/stats");
+}
+
+export async function getApprovalDetail(taskId: string) {
+  return fetchAPI<ApprovalDetail>(`/api/v1/approvals/${taskId}`);
+}
+
+// -- Agent runner API (Sprint 3 backend) ------------------------------------
+
+export interface AgentRunResult {
+  status: string;
+  [key: string]: unknown;
+}
+
+export async function runAgent(agentType: string, params: Record<string, unknown>) {
+  if (!API_URL) return null;
+  try {
+    const res = await fetch(`${API_URL}/api/v1/agents/run`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ agent_type: agentType, params }),
+    });
+    if (!res.ok) return null;
+    return res.json() as Promise<AgentRunResult>;
+  } catch {
+    return null;
+  }
+}

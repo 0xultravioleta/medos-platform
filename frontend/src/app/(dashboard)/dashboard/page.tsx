@@ -17,6 +17,8 @@ import {
   getDashboardStats,
   getTodayAppointments,
   getRecentActivity,
+  getApprovalStats,
+  type ApprovalStats,
 } from "@/lib/api";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -475,16 +477,19 @@ export default function DashboardPage() {
   const [activity, setActivity] = useState<MockRecentActivity[]>(MOCK_RECENT_ACTIVITY);
   const [loading, setLoading] = useState(true);
   const [expandedCard, setExpandedCard] = useState<StatCardKey | null>(null);
+  const [approvalStats, setApprovalStats] = useState<ApprovalStats | null>(null);
 
   useEffect(() => {
     Promise.all([
       getDashboardStats(),
       getTodayAppointments(),
       getRecentActivity(),
-    ]).then(([apiStats, apiAppts, apiActivity]) => {
+      getApprovalStats(),
+    ]).then(([apiStats, apiAppts, apiActivity, apiApprovals]) => {
       if (apiStats) setStats(apiStats);
       if (apiAppts) setAppointments(apiAppts);
       if (apiActivity) setActivity(apiActivity);
+      if (apiApprovals) setApprovalStats(apiApprovals);
       setLoading(false);
     });
   }, []);
@@ -616,6 +621,37 @@ export default function DashboardPage() {
       {/* 2b. AI Forecast Row                                              */}
       {/* ---------------------------------------------------------------- */}
       <ForecastRow />
+
+      {/* ---------------------------------------------------------------- */}
+      {/* 2c. Agent Activity Banner                                        */}
+      {/* ---------------------------------------------------------------- */}
+      {approvalStats && approvalStats.pending_count > 0 && (
+        <Link
+          href="/approvals"
+          className="group flex items-center justify-between rounded-xl border border-amber-200 bg-gradient-to-r from-amber-50 via-white to-amber-50/60 p-4 shadow-sm transition hover:shadow-md hover:border-amber-300"
+        >
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-amber-100">
+              <Shield className="h-5 w-5 text-amber-600" />
+            </div>
+            <div>
+              <p className="text-sm font-semibold text-[#0F172A]">
+                {approvalStats.pending_count} AI agent task{approvalStats.pending_count !== 1 ? "s" : ""} awaiting review
+              </p>
+              <p className="text-xs text-gray-500">
+                Avg confidence: {(approvalStats.avg_confidence * 100).toFixed(0)}%
+                {approvalStats.by_agent_type && Object.keys(approvalStats.by_agent_type).length > 0 && (
+                  <> &middot; {Object.entries(approvalStats.by_agent_type).map(([k, v]) => `${k.replace("_", " ")}: ${v}`).join(", ")}</>
+                )}
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center gap-1 text-sm font-medium text-amber-700 group-hover:text-amber-800">
+            Review now
+            <ChevronRight className="h-4 w-4 transition group-hover:translate-x-0.5" />
+          </div>
+        </Link>
+      )}
 
       {/* ---------------------------------------------------------------- */}
       {/* 3. Schedule + Activity Feed                                      */}
