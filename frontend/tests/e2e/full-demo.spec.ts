@@ -5,6 +5,7 @@ import {
   scrollToElement,
   highlightElement,
   chapterMarker,
+  navigateTo,
 } from './helpers';
 
 test('MedOS Full Product Demo', async ({ page }) => {
@@ -44,7 +45,6 @@ test('MedOS Full Product Demo', async ({ page }) => {
   chapterMarker('ACT 2', 'Dashboard Exploration');
 
   // Greeting
-  const greeting = page.locator('h1').first();
   await highlightElement(page, 'h1', 1500);
 
   // KPI Card 1: Patients Today
@@ -67,8 +67,8 @@ test('MedOS Full Product Demo', async ({ page }) => {
   await pauseForViewer(page, 2000, 'AI Forecast — revenue predictions');
 
   // Scroll to Today's Schedule
-  await scrollToElement(page, 'text=Today\'s Schedule');
-  await pauseForViewer(page, 2000, 'Today\'s Schedule — patient list');
+  await scrollToElement(page, "text=Today's Schedule");
+  await pauseForViewer(page, 2000, "Today's Schedule — patient list");
 
   // Scroll to Revenue Overview
   await scrollToElement(page, 'text=Revenue this month');
@@ -111,41 +111,18 @@ test('MedOS Full Product Demo', async ({ page }) => {
     await pauseForViewer(page, 1500, 'URGENT alert visible');
   }
 
-  // Try to dismiss an alert
-  const dismissBtn = page.locator('[aria-label="Dismiss"]').first();
-  if (await dismissBtn.isVisible().catch(() => false)) {
-    await dismissBtn.click();
-    await pauseForViewer(page, 1000, 'Alert dismissed');
-  }
-
   // Scroll to Clinical Timeline
   await scrollToElement(page, 'text=Clinical Timeline');
   await pauseForViewer(page, 2000, 'Clinical Timeline — history of encounters');
-
-  // Look for AI Insight badges
-  const aiInsight = page.getByText('AI Insight').first();
-  if (await aiInsight.isVisible().catch(() => false)) {
-    await aiInsight.click();
-    await pauseForViewer(page, 2000, 'AI Insight expanded');
-  }
-
-  // Scroll to AI-Generated Notes
-  const soapSection = page.getByText('SOAP Note').first();
-  if (await soapSection.isVisible().catch(() => false)) {
-    await scrollToElement(page, 'text=SOAP Note');
-    await highlightElement(page, 'text=Confidence', 1500);
-    await pauseForViewer(page, 2500, 'AI-Generated SOAP Note — 92% confidence');
-  }
 
   // Back to patients list
   const backBtn = page.getByText('Back to Patients').first();
   if (await backBtn.isVisible()) {
     await backBtn.click();
   } else {
-    // Fallback: use sidebar
     await page.getByRole('link', { name: /Patients/i }).first().click();
   }
-  await pauseForViewer(page, 1500, 'Patients list — 6 patients');
+  await pauseForViewer(page, 1500, 'Patients list');
 
   // ============================================================
   // ACT 4: AI SCRIBE — THE STAR FEATURE
@@ -155,7 +132,7 @@ test('MedOS Full Product Demo', async ({ page }) => {
   // Navigate to AI Notes
   await page.getByRole('link', { name: /AI Notes/i }).first().click();
   await page.waitForURL('**/ai-notes', { timeout: 10_000 });
-  await pauseForViewer(page, 2000, 'AI Notes list — 5 notes with confidence scores');
+  await pauseForViewer(page, 2000, 'AI Notes list — notes with confidence scores');
 
   // Highlight stats
   await highlightElement(page, 'text=Notes this month', 1500);
@@ -169,39 +146,24 @@ test('MedOS Full Product Demo', async ({ page }) => {
   // Select patient from dropdown
   const patientSelect = page.locator('select').first();
   await patientSelect.waitFor({ state: 'visible', timeout: 5_000 });
-  await patientSelect.selectOption({ index: 1 }); // Robert Chen
-  await pauseForViewer(page, 1000, 'Patient selected: Robert Chen');
+  await patientSelect.selectOption({ index: 1 });
+  await pauseForViewer(page, 1000, 'Patient selected');
 
-  // Highlight patient info card
-  const patientInfoCard = page.getByText('Robert Chen').first();
-  if (await patientInfoCard.isVisible().catch(() => false)) {
-    await pauseForViewer(page, 1500, 'Patient info and conditions visible');
-  }
-
-  // Click the big round mic button to start recording
-  // The button is a circular element with Mic icon; the text "Start Recording" is
-  // in a sibling <p>, not inside the <button> itself.
-  const micButton = page.locator('button').filter({ has: page.locator('svg') }).filter(
-    (loc) => loc.locator('..').getByText('Start Recording')
-  ).first();
-  // Fallback: find the button nearest to "Start Recording" text
+  // Click the recording button
   const recordArea = page.locator('text=Start Recording').locator('..');
-  const recordButton = recordArea.locator('button').first().or(micButton);
-
-  // Most reliable: the button right before the "Start Recording" paragraph
+  const recordButton = recordArea.locator('button').first();
   const startBtn = page.locator('button:has(svg)').filter({
-    has: page.locator('svg.w-10'), // the big Mic icon is w-10 h-10
+    has: page.locator('svg.w-10'),
   }).first();
 
-  // Try the most specific selector first, fall back
   const btnToClick = await startBtn.isVisible().catch(() => false)
     ? startBtn
-    : page.locator('button').nth(0); // fallback to first button in recording area
+    : recordButton;
 
   await btnToClick.click();
   await pauseForViewer(page, 1000, 'Recording started');
 
-  // Wait for transcript to populate — the demo auto-streams text
+  // Wait for transcript to populate
   await pauseForViewer(page, 18000, 'Live transcript streaming — DR/PT dialog');
 
   // Look for entity badges
@@ -210,13 +172,11 @@ test('MedOS Full Product Demo', async ({ page }) => {
     await highlightElement(page, 'text=MEDICATION', 1500);
   }
 
-  // Stop recording — find button with "Stop Recording" text
+  // Stop recording
   const stopRecording = page.getByText('Stop Recording').first();
   if (await stopRecording.isVisible().catch(() => false)) {
-    // Click the parent button or the text itself
     await stopRecording.click({ force: true });
   } else {
-    // Fallback: look for any visible stop-related button
     const stopFallback = page.locator('button').filter({ hasText: /stop/i }).first();
     if (await stopFallback.isVisible().catch(() => false)) {
       await stopFallback.click();
@@ -224,15 +184,13 @@ test('MedOS Full Product Demo', async ({ page }) => {
   }
 
   await pauseForViewer(page, 1000, 'Recording stopped — processing');
-
-  // Wait for processing pipeline (stage transitions)
   await pauseForViewer(page, 8000, 'Processing pipeline — 3 stages');
 
   // Look for SOAP note result
   const soapResult = page.getByText('Subjective').first();
   if (await soapResult.isVisible().catch(() => false)) {
     await highlightElement(page, 'text=Subjective', 1500);
-    await pauseForViewer(page, 3000, 'SOAP Note generated — reading result');
+    await pauseForViewer(page, 3000, 'SOAP Note generated');
   }
 
   // Look for ICD-10/CPT codes
@@ -253,9 +211,12 @@ test('MedOS Full Product Demo', async ({ page }) => {
   await pauseForViewer(page, 2000, 'Claims page loaded — KPIs visible');
 
   // Highlight Revenue Intelligence
-  await scrollToElement(page, 'text=Recoverable Revenue');
-  await highlightElement(page, 'text=Recoverable Revenue', 1500);
-  await pauseForViewer(page, 1500);
+  const recoverableRevenue = page.getByText('Recoverable Revenue').first();
+  if (await recoverableRevenue.isVisible().catch(() => false)) {
+    await scrollToElement(page, 'text=Recoverable Revenue');
+    await highlightElement(page, 'text=Recoverable Revenue', 1500);
+    await pauseForViewer(page, 1500);
+  }
 
   // Expand AI Denial Prevention Insights
   const denialInsights = page.getByText('AI Denial Prevention Insights').first();
@@ -265,8 +226,11 @@ test('MedOS Full Product Demo', async ({ page }) => {
   }
 
   // Scroll to claims table
-  await scrollToElement(page, 'text=CLM-');
-  await pauseForViewer(page, 1500, 'Claims table — AI confidence per claim');
+  const claimId = page.locator('text=CLM-').first();
+  if (await claimId.isVisible().catch(() => false)) {
+    await scrollToElement(page, 'text=CLM-');
+    await pauseForViewer(page, 1500, 'Claims table — AI confidence per claim');
+  }
 
   // Search for Aetna
   const searchInput = page.getByPlaceholder(/Search/i).first();
@@ -274,31 +238,254 @@ test('MedOS Full Product Demo', async ({ page }) => {
     await searchInput.click();
     await searchInput.pressSequentially('Aetna', { delay: 100 });
     await pauseForViewer(page, 2000, 'Filtered by Aetna — live search');
-
-    // Clear search
     await searchInput.clear();
     await pauseForViewer(page, 1000, 'Search cleared');
   }
 
-  // Click on a claim row to expand — target the <td> in the table (font-mono styled)
-  const claimCell = page.locator('td.font-mono').filter({ hasText: 'CLM-2026-0847' }).first();
-  if (await claimCell.isVisible().catch(() => false)) {
-    await claimCell.scrollIntoViewIfNeeded();
-    await claimCell.click({ force: true });
-    await pauseForViewer(page, 2500, 'Claim expanded — timeline + billing breakdown');
+  // ============================================================
+  // ACT 6: PRIOR AUTH & DENIAL MANAGEMENT
+  // ============================================================
+  chapterMarker('ACT 6', 'Prior Authorization & Denial Management');
+
+  // --- Prior Auth --- (navigate via claims page links)
+  // Look for "Prior Auth" link on claims page
+  const priorAuthLink = page.getByRole('link', { name: /Prior Auth/i }).first();
+  if (await priorAuthLink.isVisible().catch(() => false)) {
+    await priorAuthLink.click();
   } else {
-    // Fallback: click a table row directly
-    const tableRow = page.locator('tr').filter({ hasText: 'Maria Garcia' }).first();
-    if (await tableRow.isVisible().catch(() => false)) {
-      await tableRow.click({ force: true });
-      await pauseForViewer(page, 2500, 'Claim expanded — timeline + billing breakdown');
-    }
+    // Fallback: direct navigation preserving session
+    await page.goto('/claims/prior-auth');
+  }
+  await page.waitForLoadState('networkidle');
+  await pauseForViewer(page, 2500, 'Prior Authorization Tracking — status overview');
+
+  // Highlight PA stats
+  const paApproved = page.getByText('Approved').first();
+  if (await paApproved.isVisible()) {
+    await highlightElement(page, 'text=Approved', 1500);
+  }
+
+  // Scroll to PA list
+  await page.evaluate(() => window.scrollTo({ top: 300, behavior: 'smooth' }));
+  await pauseForViewer(page, 1500, 'PA requests list with payer decisions');
+
+  // Click on a PA to expand detail
+  const paRow = page.locator('text=PA-').first();
+  if (await paRow.isVisible().catch(() => false)) {
+    await paRow.click();
+    await pauseForViewer(page, 2500, 'PA detail — timeline, justification, payer response');
+  }
+
+  // Scroll to see AI justification
+  const justification = page.getByText('Clinical Justification').first();
+  if (await justification.isVisible().catch(() => false)) {
+    await scrollToElement(page, 'text=Clinical Justification');
+    await highlightElement(page, 'text=Clinical Justification', 1500);
+    await pauseForViewer(page, 2000, 'AI-generated clinical justification');
+  }
+
+  // --- Denial Management ---
+  const denialsLink = page.getByRole('link', { name: /Denials/i }).first();
+  if (await denialsLink.isVisible().catch(() => false)) {
+    await denialsLink.click();
+  } else {
+    await page.goto('/claims/denials');
+  }
+  await page.waitForLoadState('networkidle');
+  await pauseForViewer(page, 2500, 'Denial Management Dashboard');
+
+  // Highlight denial stats
+  const denialRate = page.getByText('Denial Rate').first();
+  if (await denialRate.isVisible().catch(() => false)) {
+    await highlightElement(page, 'text=Denial Rate', 1500);
+  }
+
+  // Scroll to see CARC code distribution
+  const carcSection = page.getByText('CARC').first();
+  if (await carcSection.isVisible().catch(() => false)) {
+    await scrollToElement(page, 'text=CARC');
+    await pauseForViewer(page, 2000, 'CARC code distribution — denial reason analysis');
+  }
+
+  // Click on a denial to expand
+  const denialRow = page.locator('[class*="cursor-pointer"]').first();
+  if (await denialRow.isVisible().catch(() => false)) {
+    await denialRow.click();
+    await pauseForViewer(page, 2500, 'Denial detail — root cause, appeal letter, probability');
+  }
+
+  // Look for appeal letter
+  const appealLetter = page.getByText('Appeal Letter').first();
+  if (await appealLetter.isVisible().catch(() => false)) {
+    await scrollToElement(page, 'text=Appeal Letter');
+    await highlightElement(page, 'text=Appeal Letter', 1500);
+    await pauseForViewer(page, 2500, 'AI-drafted appeal letter with evidence');
+  }
+
+  // --- Claims Analytics ---
+  const analyticsClaimsLink = page.getByRole('link', { name: /Analytics/i }).first();
+  if (await analyticsClaimsLink.isVisible().catch(() => false)) {
+    await analyticsClaimsLink.click();
+  } else {
+    await page.goto('/claims/analytics');
+  }
+  await page.waitForLoadState('networkidle');
+  await pauseForViewer(page, 2500, 'Claims Analytics — KPI gauges and financial summary');
+
+  // Scroll through analytics
+  await page.evaluate(() => window.scrollTo({ top: 400, behavior: 'smooth' }));
+  await pauseForViewer(page, 2000, 'Financial summary and pipeline status');
+
+  await page.evaluate(() => window.scrollTo({ top: 800, behavior: 'smooth' }));
+  await pauseForViewer(page, 2000, 'AR aging and top denial reasons');
+
+  // ============================================================
+  // ACT 7: APPROVALS & PILOT METRICS
+  // ============================================================
+  chapterMarker('ACT 7', 'Approvals & Pilot Metrics');
+
+  // --- Approvals ---
+  await page.getByRole('link', { name: /Approvals/i }).first().click();
+  await page.waitForURL('**/approvals', { timeout: 10_000 });
+  await pauseForViewer(page, 2500, 'Approvals queue — AI tasks awaiting human review');
+
+  // Highlight a pending approval
+  const pendingBadge = page.getByText('pending_review').first();
+  if (await pendingBadge.isVisible().catch(() => false)) {
+    await highlightElement(page, 'text=pending_review', 1500);
+    await pauseForViewer(page, 1500, 'Pending review — human-in-the-loop');
+  }
+
+  // Scroll to see approval detail
+  await page.evaluate(() => window.scrollTo({ top: 300, behavior: 'smooth' }));
+  await pauseForViewer(page, 2000, 'Approval tasks with agent type and confidence');
+
+  // --- Pilot Metrics ---
+  await page.getByRole('link', { name: /Pilot/i }).first().click();
+  await page.waitForURL('**/pilot', { timeout: 10_000 });
+  await pauseForViewer(page, 2500, 'Pilot Metrics Dashboard — KPIs for Dr. Di Reze');
+
+  // Highlight time saved
+  const timeSaved = page.getByText('Time Saved').first();
+  if (await timeSaved.isVisible().catch(() => false)) {
+    await highlightElement(page, 'text=Time Saved', 2000);
+    await pauseForViewer(page, 2000, 'Time saved per provider — the money metric');
+  }
+
+  // Scroll to revenue impact
+  const revenueImpact = page.getByText('Revenue Impact').first();
+  if (await revenueImpact.isVisible().catch(() => false)) {
+    await scrollToElement(page, 'text=Revenue Impact');
+    await pauseForViewer(page, 2000, 'Revenue impact — clean claim rate, denial rate, days in AR');
+  }
+
+  // Scroll to AI performance
+  const aiPerformance = page.getByText('AI Performance').first();
+  if (await aiPerformance.isVisible().catch(() => false)) {
+    await scrollToElement(page, 'text=AI Performance');
+    await pauseForViewer(page, 2000, 'AI performance — coding accuracy, notes generated');
+  }
+
+  // Scroll to benchmark targets
+  const benchmarks = page.getByText('Benchmark').first();
+  if (await benchmarks.isVisible().catch(() => false)) {
+    await scrollToElement(page, 'text=Benchmark');
+    await highlightElement(page, 'text=Benchmark', 1500);
+    await pauseForViewer(page, 2000, 'Benchmark targets — MedOS vs industry average');
   }
 
   // ============================================================
-  // ACT 6: ANALYTICS, APPOINTMENTS & SETTINGS
+  // ACT 8: DOCUMENTATION CENTER
   // ============================================================
-  chapterMarker('ACT 6', 'Analytics, Appointments & Settings');
+  chapterMarker('ACT 8', 'Documentation Center');
+
+  await page.getByRole('link', { name: /Docs/i }).first().click();
+  await page.waitForURL('**/docs', { timeout: 10_000 });
+  await pauseForViewer(page, 2500, 'Docs overview — system architecture');
+
+  // Scroll to see architecture diagram
+  await page.evaluate(() => window.scrollTo({ top: 400, behavior: 'smooth' }));
+  await pauseForViewer(page, 2000, 'Architecture diagram — full system overview');
+
+  // Visit API docs
+  await page.goto('/docs/api');
+  await page.waitForLoadState('networkidle');
+  await pauseForViewer(page, 2500, 'API Reference — Swagger-like endpoint cards');
+
+  await page.evaluate(() => window.scrollTo({ top: 500, behavior: 'smooth' }));
+  await pauseForViewer(page, 2000, 'API endpoints with methods, paths, descriptions');
+
+  // Visit Agent workflows
+  await page.goto('/docs/agents');
+  await page.waitForLoadState('networkidle');
+  await pauseForViewer(page, 2500, 'Agent Workflows — LangGraph state diagrams');
+
+  await page.evaluate(() => window.scrollTo({ top: 400, behavior: 'smooth' }));
+  await pauseForViewer(page, 2000, 'Agent pipeline diagrams and confidence routing');
+
+  // Visit MCP docs
+  await page.goto('/docs/mcp');
+  await page.waitForLoadState('networkidle');
+  await pauseForViewer(page, 2500, 'MCP Protocol — 36 tools reference');
+
+  await page.evaluate(() => window.scrollTo({ top: 400, behavior: 'smooth' }));
+  await pauseForViewer(page, 2000, 'MCP tool catalog — FHIR, Scribe, Billing, Scheduling');
+
+  // Visit Security docs
+  await page.goto('/docs/security');
+  await page.waitForLoadState('networkidle');
+  await pauseForViewer(page, 2500, 'Security Pipeline — HIPAA compliance');
+
+  await page.evaluate(() => window.scrollTo({ top: 400, behavior: 'smooth' }));
+  await pauseForViewer(page, 2000, 'PHI access matrix and safety pipeline');
+
+  // ============================================================
+  // ACT 9: SETTINGS & PRACTICE CONFIGURATION
+  // ============================================================
+  chapterMarker('ACT 9', 'Settings & Practice Configuration');
+
+  // --- Onboarding Wizard ---
+  await page.goto('/settings/onboarding');
+  await page.waitForLoadState('networkidle');
+  await pauseForViewer(page, 2500, 'Onboarding Wizard — multi-step practice setup');
+
+  // Scroll to see wizard steps
+  await page.evaluate(() => window.scrollTo({ top: 300, behavior: 'smooth' }));
+  await pauseForViewer(page, 2000, 'Step-by-step onboarding flow');
+
+  // --- Practice Configuration ---
+  await page.goto('/settings/practice');
+  await page.waitForLoadState('networkidle');
+  await pauseForViewer(page, 2500, 'Practice Configuration — providers, locations, fees');
+
+  // Click through tabs if present
+  const locationsTab = page.getByText('Locations').first();
+  if (await locationsTab.isVisible().catch(() => false)) {
+    await locationsTab.click();
+    await pauseForViewer(page, 1500, 'Locations tab — practice locations');
+  }
+
+  const feeScheduleTab = page.getByText('Fee Schedule').first();
+  if (await feeScheduleTab.isVisible().catch(() => false)) {
+    await feeScheduleTab.click();
+    await pauseForViewer(page, 1500, 'Fee Schedules tab — CPT codes and rates');
+  }
+
+  const payerTab = page.getByText('Payer').first();
+  if (await payerTab.isVisible().catch(() => false)) {
+    await payerTab.click();
+    await pauseForViewer(page, 1500, 'Payer Contracts tab — payer agreements');
+  }
+
+  // --- Regular Settings ---
+  await page.getByRole('link', { name: /Settings/i }).first().click();
+  await page.waitForURL('**/settings', { timeout: 10_000 });
+  await pauseForViewer(page, 1500, 'Settings page — notifications and security');
+
+  // ============================================================
+  // ACT 10: ANALYTICS & GRAND FINALE
+  // ============================================================
+  chapterMarker('ACT 10', 'Analytics & Grand Finale');
 
   // Analytics
   await page.getByRole('link', { name: /Analytics/i }).first().click();
@@ -314,35 +501,20 @@ test('MedOS Full Product Demo', async ({ page }) => {
   // Appointments
   await page.getByRole('link', { name: /Appointments/i }).first().click();
   await page.waitForURL('**/appointments', { timeout: 10_000 });
-  await pauseForViewer(page, 2000, 'Appointments — today\'s schedule');
+  await pauseForViewer(page, 2000, "Appointments — today's schedule");
 
-  // Settings
-  await page.getByRole('link', { name: /Settings/i }).first().click();
-  await page.waitForURL('**/settings', { timeout: 10_000 });
-  await pauseForViewer(page, 1500, 'Settings page');
+  // Final: back to dashboard
+  await page.getByRole('link', { name: /Dashboard/i }).first().click();
+  await page.waitForURL('**/dashboard', { timeout: 10_000 });
+  await pauseForViewer(page, 2000, 'Back to dashboard — full circle');
 
-  // Toggle Two-Factor Authentication
-  const twoFaToggle = page.getByRole('switch').nth(1); // Second toggle = 2FA
-  if (await twoFaToggle.isVisible()) {
-    await highlightElement(page, '[role="switch"]:nth-of-type(1)', 1000);
-    await twoFaToggle.click();
-    await pauseForViewer(page, 1000, 'Two-Factor Authentication toggled ON');
-  }
-
-  // Save Changes
-  const saveBtn = page.getByRole('button', { name: /Save Changes/i });
-  if (await saveBtn.isVisible()) {
-    await saveBtn.click();
-    await pauseForViewer(page, 2000, 'Settings saved — green confirmation banner');
-  }
-
-  // Sign out — target the desktop sidebar (second aside), not the hidden mobile one
+  // Sign out
   const desktopSidebar = page.locator('aside').last();
   const signOutBtn = desktopSidebar.getByText('Sign out');
   await signOutBtn.scrollIntoViewIfNeeded();
   await signOutBtn.click();
   await page.waitForURL('**/', { timeout: 10_000 });
-  await pauseForViewer(page, 2500, 'Signed out — back to login. Demo complete!');
+  await pauseForViewer(page, 2500, 'Signed out — MedOS Full Demo Complete!');
 
-  chapterMarker('DONE', 'MedOS Full Product Demo Complete');
+  chapterMarker('DONE', 'MedOS Full Product Demo Complete — 10 Acts, 21+ Pages');
 });

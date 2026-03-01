@@ -73,3 +73,21 @@ export function chapterMarker(act: string, title: string) {
   console.log(`  ${act}: ${title}`);
   console.log(`========================================\n`);
 }
+
+/**
+ * Navigate to a path using client-side navigation (preserves auth state).
+ * Falls back to clicking a sidebar/page link if available.
+ */
+export async function navigateTo(page: Page, path: string) {
+  // Use Next.js client-side navigation via anchor click injection
+  await page.evaluate((p) => {
+    const a = document.createElement('a');
+    a.href = p;
+    a.style.display = 'none';
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+  }, path);
+  await page.waitForLoadState('networkidle');
+  await page.waitForTimeout(500);
+}

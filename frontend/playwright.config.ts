@@ -3,7 +3,7 @@ import { defineConfig } from '@playwright/test';
 export default defineConfig({
   testDir: './tests/e2e',
   outputDir: './test-results',
-  timeout: 300_000, // 5 min — this is a long demo, not a unit test
+  timeout: 480_000, // 8 min — full 10-act platform tour
   expect: { timeout: 10_000 },
   fullyParallel: false,
   retries: 0,
