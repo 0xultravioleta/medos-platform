@@ -101,6 +101,11 @@ def create_app() -> FastAPI:
 
     app.include_router(onboarding_router)
 
+    # Monitoring & alerting (Sprint 5)
+    from medos.routers.monitoring import router as monitoring_router
+
+    app.include_router(monitoring_router)
+
     # Sprint 3: WebSocket events, Agent runner, Workflows
     from medos.routers.agent_runner import router as agent_runner_router
     from medos.routers.workflows import router as workflows_router
