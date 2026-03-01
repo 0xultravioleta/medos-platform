@@ -1018,9 +1018,102 @@ test('MedOS Full Product Demo', async ({ page }) => {
   await pauseForViewer(page, 2000, 'Project Tracker in Admin — Kanban board');
 
   // ============================================================
-  // ACT 14: GRAND FINALE — BACK TO DASHBOARD
+  // ACT 14: THEORIA MEDICAL PILOT (Sidebar #13)
   // ============================================================
-  chapterMarker('ACT 14', 'Grand Finale');
+  chapterMarker('ACT 14', 'Theoria Medical — Post-Acute AI Platform');
+
+  // --- Clinical Operations ---
+  await page.goto('/theoria/facility');
+  await page.waitForLoadState('networkidle');
+  await pauseForViewer(page, 2000, 'Facility Console — Multi-site SNF dashboard');
+  // Click Patients tab
+  const patientsTab = page.getByRole('button', { name: /Patients/i }).first();
+  if (await patientsTab.isVisible().catch(() => false)) {
+    await patientsTab.click();
+    await pauseForViewer(page, 1500, 'Patient roster across all facilities');
+  }
+  // Click Staffing tab
+  const staffingTab = page.getByRole('button', { name: /Staffing/i }).first();
+  if (await staffingTab.isVisible().catch(() => false)) {
+    await staffingTab.click();
+    await pauseForViewer(page, 1500, 'Provider staffing & shift coverage');
+  }
+
+  await page.goto('/theoria/shift-handoff');
+  await page.waitForLoadState('networkidle');
+  await pauseForViewer(page, 2000, 'Shift Handoff — Priority-ranked briefing');
+
+  await page.goto('/theoria/guardian');
+  await page.waitForLoadState('networkidle');
+  await pauseForViewer(page, 2000, 'Post-Acute Guardian — Live wearable monitoring');
+  const alertQueueTab = page.getByRole('button', { name: /Alert/i }).first();
+  if (await alertQueueTab.isVisible().catch(() => false)) {
+    await alertQueueTab.click();
+    await pauseForViewer(page, 1500, 'Alert Queue — AI-powered triage');
+  }
+
+  await page.goto('/theoria/readmission');
+  await page.waitForLoadState('networkidle');
+  await pauseForViewer(page, 2000, 'Readmission Risk — Predictive scoring');
+
+  // --- Revenue Capture ---
+  await page.goto('/theoria/ccm');
+  await page.waitForLoadState('networkidle');
+  await pauseForViewer(page, 2000, 'CCM Time Tracker — CPT 99490 billing');
+  const billingTab = page.getByRole('button', { name: /Billing/i }).first();
+  if (await billingTab.isVisible().catch(() => false)) {
+    await billingTab.click();
+    await pauseForViewer(page, 1500, 'Billing threshold — revenue capture');
+  }
+
+  await page.goto('/theoria/rpm');
+  await page.waitForLoadState('networkidle');
+  await pauseForViewer(page, 2000, 'RPM Revenue — Device billing dashboard');
+
+  await page.goto('/theoria/care-gaps');
+  await page.waitForLoadState('networkidle');
+  await pauseForViewer(page, 2000, 'Care Gap Scanner — Population health');
+
+  // --- Data Intelligence ---
+  await page.goto('/theoria/discharge');
+  await page.waitForLoadState('networkidle');
+  await pauseForViewer(page, 2000, 'Discharge Reconciliation — Hospital-SNF bridge');
+  const medChangesTab = page.getByRole('button', { name: /Med/i }).first();
+  if (await medChangesTab.isVisible().catch(() => false)) {
+    await medChangesTab.click();
+    await pauseForViewer(page, 1500, 'Medication comparison — ChartEasy integration');
+  }
+
+  await page.goto('/theoria/care-plans');
+  await page.waitForLoadState('networkidle');
+  await pauseForViewer(page, 2000, 'Care Plan Optimizer — AI recommendations');
+
+  await page.goto('/theoria/staffing');
+  await page.waitForLoadState('networkidle');
+  await pauseForViewer(page, 2000, 'Staffing Optimizer — Dynamic allocation');
+
+  // --- Enterprise & Governance ---
+  await page.goto('/theoria/aco-reach');
+  await page.waitForLoadState('networkidle');
+  await pauseForViewer(page, 2000, 'ACO REACH — Empassion Health quality tracking');
+
+  await page.goto('/theoria/executive');
+  await page.waitForLoadState('networkidle');
+  await pauseForViewer(page, 2000, 'PE Executive Dashboard — Amulet Capital reporting');
+  const financialTab = page.getByRole('button', { name: /Financial/i }).first();
+  if (await financialTab.isVisible().catch(() => false)) {
+    await financialTab.click();
+    await pauseForViewer(page, 1500, 'Financial Roll-up — Platform value creation');
+  }
+
+  await page.goto('/theoria/credentialing');
+  await page.waitForLoadState('networkidle');
+  await pauseForViewer(page, 2000, 'Credentialing Center — 21-state licensing');
+
+  // ============================================================
+  // ACT 15: GRAND FINALE — BACK TO DASHBOARD
+  // ============================================================
+  chapterMarker('ACT 15', 'Grand Finale');
 
   // Back to Dashboard — full circle
   await page.getByRole('link', { name: /Dashboard/i }).first().click();
@@ -1035,5 +1128,5 @@ test('MedOS Full Product Demo', async ({ page }) => {
   await page.waitForURL('**/', { timeout: 10_000 });
   await pauseForViewer(page, 2500, 'Signed out — MedOS Full Demo Complete!');
 
-  chapterMarker('DONE', 'MedOS Full Product Demo — 14 Acts, 40 Pages, Every Click Tested');
+  chapterMarker('DONE', 'MedOS Full Product Demo — 15 Acts, 53 Pages, Every Click Tested');
 });

@@ -22,6 +22,7 @@ import {
   Target,
   LayoutGrid,
   Shield,
+  Building2,
 } from "lucide-react";
 
 const NAV_ITEMS = [
@@ -36,6 +37,7 @@ const NAV_ITEMS = [
   { label: "Docs", href: "/docs", icon: BookOpen },
   { label: "Project", href: "/project", icon: LayoutGrid },
   { label: "Admin", href: "/admin", icon: Shield },
+  { label: "Theoria", href: "/theoria", icon: Building2 },
   { label: "Settings", href: "/settings", icon: Settings },
 ];
 
