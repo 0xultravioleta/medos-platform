@@ -1,4 +1,4 @@
-"""Billing/Claims MCP Server - 8 tools for revenue cycle management.
+"""Billing/Claims MCP Server - 12 tools for revenue cycle management.
 
 Tools:
     billing_check_eligibility  - Verify patient insurance eligibility
@@ -9,6 +9,10 @@ Tools:
     billing_submit_appeal      - Submit a claim appeal (requires approval)
     billing_patient_balance    - Get patient balance and payment history
     billing_payer_rules        - Get payer-specific billing rules
+    billing_generate_claim     - Generate X12 837P from claim data (requires approval)
+    billing_scrub_claim        - Run pre-submission scrubbing rules
+    billing_post_payment       - Post X12 835 payment against a claim (requires approval)
+    billing_claims_analytics   - Claims pipeline analytics and KPIs
 """
 
 from __future__ import annotations
@@ -490,4 +494,299 @@ async def billing_payer_rules(payer_name: str = "") -> dict[str, Any]:
     return {
         "error": f"Payer '{payer_name}' not found",
         "available_payers": [v["name"] for v in _PAYER_RULES.values()],
+    }
+
+
+# ---------------------------------------------------------------------------
+# Sprint 4 — Claims Pipeline Tools
+# ---------------------------------------------------------------------------
+
+
+@hipaa_tool(
+    phi_level="full", allowed_agents=_BILLING_WRITE_AGENTS,
+    server="billing", requires_approval=True,
+)
+async def billing_generate_claim(
+    claim_id: str = "",
+    patient_id: str = "",
+    provider_npi: str = "1234567893",
+    provider_name: str = "Sunshine Orthopedics",
+    provider_tax_id: str = "12-3456789",
+    cpt_codes: list[str] | None = None,
+    icd10_codes: list[str] | None = None,
+    billed_amount: float = 0.0,
+    date_of_service: str = "",
+    frequency_code: str = "1",
+) -> dict[str, Any]:
+    """Generate an X12 837P professional claim from structured claim data. Requires human approval."""
+    from medos.billing.x12_837p import generate_837p
+
+    cpt_codes = cpt_codes or []
+    icd10_codes = icd10_codes or []
+
+    if not claim_id:
+        claim_id = f"CLM-{datetime.now(UTC).strftime('%Y')}-{uuid4().hex[:3].upper()}"
+    if not date_of_service:
+        date_of_service = datetime.now(UTC).strftime("%Y-%m-%d")
+
+    # Build claim data dict matching x12_837p._dict_to_claim expected format
+    patient = _MOCK_ELIGIBILITY.get(patient_id, {})
+    patient_name = patient.get("patient_name", "Unknown Patient")
+    name_parts = patient_name.split(maxsplit=1)
+    first_name = name_parts[0] if name_parts else "Unknown"
+    last_name = name_parts[1] if len(name_parts) > 1 else "Patient"
+
+    charge_per_line = billed_amount / max(len(cpt_codes), 1)
+    claim_data = {
+        "claim_id": claim_id,
+        "total_charge": billed_amount,
+        "billing_provider": {
+            "npi": provider_npi,
+            "name": provider_name,
+            "tax_id": provider_tax_id,
+            "taxonomy_code": "207X00000X",
+            "address": {"line1": "100 Palm Ave", "city": "Miami", "state": "FL", "zip_code": "33101"},
+        },
+        "subscriber": {
+            "first_name": first_name,
+            "last_name": last_name,
+            "member_id": patient.get("plan_id", "UNKNOWN-001"),
+            "date_of_birth": "1965-03-15",
+            "gender": "M",
+        },
+        "payer": {
+            "payer_id": patient.get("payer", "UNKNOWN"),
+            "name": patient.get("payer", "Unknown Payer"),
+        },
+        "diagnosis_codes": icd10_codes,
+        "service_lines": [
+            {
+                "procedure_code": code,
+                "charge_amount": round(charge_per_line, 2),
+                "units": 1,
+                "service_date": date_of_service,
+                "diagnosis_pointers": list(range(1, min(len(icd10_codes), 4) + 1)),
+            }
+            for code in cpt_codes
+        ],
+        "service_date": date_of_service,
+        "frequency_code": frequency_code,
+    }
+
+    try:
+        edi_output = generate_837p(claim_data)
+        segment_count = edi_output.count("~")
+        logger.info("Generated 837P for claim %s (%d segments)", claim_id, segment_count)
+        return {
+            "claim_id": claim_id,
+            "status": "generated",
+            "format": "X12_837P_005010X222A1",
+            "segment_count": segment_count,
+            "edi_preview": edi_output[:500] + ("..." if len(edi_output) > 500 else ""),
+            "edi_size_bytes": len(edi_output),
+            "requires_approval": True,
+            "message": "X12 837P generated. Queued for human review before clearinghouse submission.",
+        }
+    except (ValueError, KeyError) as exc:
+        return {"error": f"Failed to generate 837P: {exc}", "claim_id": claim_id}
+
+
+@hipaa_tool(phi_level="limited", allowed_agents=_BILLING_AGENTS, server="billing")
+async def billing_scrub_claim(
+    claim_id: str = "",
+    patient_id: str = "",
+    provider_npi: str = "",
+    cpt_codes: list[str] | None = None,
+    icd10_codes: list[str] | None = None,
+    billed_amount: float = 0.0,
+    date_of_service: str = "",
+) -> dict[str, Any]:
+    """Run pre-submission scrubbing rules on a claim. Returns findings and denial risk score."""
+    from medos.billing.claims_scrubber import scrub_claim
+
+    cpt_codes = cpt_codes or []
+    icd10_codes = icd10_codes or []
+
+    if not date_of_service:
+        date_of_service = datetime.now(UTC).strftime("%Y-%m-%d")
+
+    # Look up patient data from mock
+    patient = _MOCK_ELIGIBILITY.get(patient_id, {})
+    charge_per_line = billed_amount / max(len(cpt_codes), 1)
+
+    claim_dict = {
+        "claim_id": claim_id or "SCRUB-CHECK",
+        "billing_provider": {"npi": provider_npi, "name": "Provider", "tax_id": "00-0000000"},
+        "subscriber": {
+            "id": patient.get("plan_id", "UNKNOWN"),
+            "name": {"first": patient.get("patient_name", "Unknown").split()[0],
+                      "last": patient.get("patient_name", "Unknown").split()[-1]},
+            "dob": "1965-01-01",
+            "gender": "M",
+        },
+        "payer": {"id": patient.get("payer", "UNK"), "name": patient.get("payer", "Unknown")},
+        "diagnoses": [{"code": code} for code in icd10_codes],
+        "service_lines": [
+            {
+                "cpt": code,
+                "charge": round(charge_per_line, 2),
+                "units": 1,
+                "date_of_service": date_of_service,
+                "diagnosis_pointers": [1],
+            }
+            for code in cpt_codes
+        ],
+        "service_date": date_of_service,
+        "submission_date": datetime.now(UTC).strftime("%Y-%m-%d"),
+        "total_charges": billed_amount,
+        "prior_auth_number": None,
+        "frequency_code": "1",
+    }
+
+    result = scrub_claim(claim_dict)
+    return {
+        "claim_id": claim_dict["claim_id"],
+        "passed": result.passed,
+        "denial_risk_score": result.denial_risk_score,
+        "errors": result.errors,
+        "warnings": result.warnings,
+        "findings": [
+            {
+                "rule_id": f.rule_id,
+                "severity": f.severity.value,
+                "category": f.category,
+                "description": f.description,
+                "remediation": f.remediation,
+            }
+            for f in result.findings
+        ],
+        "recommendation": (
+            "SUBMIT" if result.passed
+            else "FIX_ERRORS" if result.errors > 0
+            else "REVIEW_WARNINGS"
+        ),
+    }
+
+
+@hipaa_tool(
+    phi_level="full", allowed_agents=_BILLING_WRITE_AGENTS,
+    server="billing", requires_approval=True,
+)
+async def billing_post_payment(
+    claim_id: str = "",
+    edi_835_content: str = "",
+) -> dict[str, Any]:
+    """Post an X12 835 remittance payment against a claim. Requires human approval."""
+    from medos.billing.payment_posting import post_payment
+    from medos.billing.x12_835_parser import parse_835
+
+    claim = _MOCK_CLAIMS.get(claim_id)
+    if not claim:
+        return {"error": f"Claim {claim_id} not found"}
+
+    if not edi_835_content.strip():
+        return {"error": "edi_835_content is required (X12 835 EDI string)"}
+
+    try:
+        remittance = parse_835(edi_835_content)
+    except Exception as exc:
+        return {"error": f"Failed to parse 835: {exc}"}
+
+    # Find matching claim payment in the remittance
+    matching = None
+    for cp in remittance.claim_payments:
+        if cp.payer_claim_id == claim_id or cp.payer_claim_id == claim.get("payer_claim_id"):
+            matching = cp
+            break
+
+    if not matching:
+        return {
+            "error": f"No matching payment found for claim {claim_id} in 835",
+            "claims_in_835": [cp.payer_claim_id for cp in remittance.claim_payments],
+        }
+
+    result = post_payment(claim, matching)
+
+    # Update mock claim status
+    claim["status"] = result.status
+    claim["paid_amount"] = result.payer_paid
+    claim["patient_responsibility"] = result.patient_responsibility
+
+    logger.info("Posted payment for %s: %s ($%.2f paid)", claim_id, result.status, result.payer_paid)
+    return {
+        "claim_id": claim_id,
+        "status": result.status,
+        "payer_paid": result.payer_paid,
+        "patient_responsibility": result.patient_responsibility,
+        "write_off": result.write_off,
+        "balance_remaining": result.balance_remaining,
+        "adjustments": [
+            {"group": a.group_code, "reason": a.reason_code, "description": a.description, "amount": a.amount}
+            for a in result.adjustments
+        ],
+        "requires_approval": True,
+        "message": "Payment posted. Queued for human review before finalization.",
+    }
+
+
+@hipaa_tool(phi_level="none", allowed_agents=_BILLING_AGENTS, server="billing")
+async def billing_claims_analytics() -> dict[str, Any]:
+    """Get claims pipeline analytics: clean claim rate, denial breakdown, AR aging, KPIs."""
+    claims = list(_MOCK_CLAIMS.values())
+    total = len(claims)
+    if total == 0:
+        return {"error": "No claims data available"}
+
+    paid = [c for c in claims if c["status"] == "paid"]
+    denied = [c for c in claims if c["status"] == "denied"]
+    pending = [c for c in claims if c["status"] in ("pending", "pending_approval", "in_review")]
+
+    total_billed = sum(c.get("billed_amount", 0) for c in claims)
+    total_collected = sum(c.get("paid_amount", 0) or 0 for c in paid)
+    total_denied_amount = sum(c.get("billed_amount", 0) for c in denied)
+
+    # Denial breakdown by code
+    denial_codes: dict[str, int] = {}
+    for c in denied:
+        code = c.get("denial_code", "unknown")
+        denial_codes[code] = denial_codes.get(code, 0) + 1
+
+    # AR aging buckets (mock since we don't have real dates)
+    ar_aging = {
+        "0_30_days": len(pending),
+        "31_60_days": 0,
+        "61_90_days": 0,
+        "90_plus_days": 0,
+    }
+
+    return {
+        "summary": {
+            "total_claims": total,
+            "clean_claim_rate": round((len(paid) / total) * 100, 1) if total else 0,
+            "denial_rate": round((len(denied) / total) * 100, 1) if total else 0,
+            "collection_rate": round((total_collected / total_billed) * 100, 1) if total_billed else 0,
+        },
+        "financial": {
+            "total_billed": round(total_billed, 2),
+            "total_collected": round(total_collected, 2),
+            "total_denied": round(total_denied_amount, 2),
+            "outstanding_ar": round(total_billed - total_collected - total_denied_amount, 2),
+        },
+        "status_breakdown": {
+            "paid": len(paid),
+            "denied": len(denied),
+            "pending": len(pending),
+        },
+        "denial_by_code": denial_codes,
+        "ar_aging": ar_aging,
+        "top_denial_reasons": [
+            {**_CARC_RARC_CODES[code], "count": count}
+            for code, count in sorted(denial_codes.items(), key=lambda x: -x[1])
+            if code in _CARC_RARC_CODES
+        ][:5],
+        "kpis": {
+            "avg_days_to_payment": 18.5,
+            "first_pass_resolution_rate": 80.0,
+            "claims_per_provider_per_day": 12.3,
+        },
     }
