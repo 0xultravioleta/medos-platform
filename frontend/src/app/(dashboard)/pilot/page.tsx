@@ -140,17 +140,22 @@ export default function PilotPage() {
 
   useEffect(() => {
     async function fetchData() {
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 2000);
       try {
+        const opts = { signal: controller.signal };
         const [metricsRes, baselineRes, targetsRes] = await Promise.all([
-          fetch(`${API_BASE}/api/v1/pilot/metrics`).catch(() => null),
-          fetch(`${API_BASE}/api/v1/pilot/metrics/baseline`).catch(() => null),
-          fetch(`${API_BASE}/api/v1/pilot/metrics/targets`).catch(() => null),
+          fetch(`${API_BASE}/api/v1/pilot/metrics`, opts).catch(() => null),
+          fetch(`${API_BASE}/api/v1/pilot/metrics/baseline`, opts).catch(() => null),
+          fetch(`${API_BASE}/api/v1/pilot/metrics/targets`, opts).catch(() => null),
         ]);
         if (metricsRes?.ok) setMetrics(await metricsRes.json());
         if (baselineRes?.ok) setBaseline(await baselineRes.json());
         if (targetsRes?.ok) setTargets(await targetsRes.json());
       } catch {
         // Use mock data
+      } finally {
+        clearTimeout(timeout);
       }
       setLoading(false);
     }
