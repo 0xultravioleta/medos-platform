@@ -34,10 +34,10 @@ const NAV_ITEMS = [
   { label: "Approvals", href: "/approvals", icon: ShieldCheck },
   { label: "Analytics", href: "/analytics", icon: BarChart3 },
   { label: "Pilot", href: "/pilot", icon: Target },
-  { label: "Docs", href: "/docs", icon: BookOpen },
   { label: "Project", href: "/project", icon: LayoutGrid },
   { label: "Admin", href: "/admin", icon: Shield },
   { label: "Theoria", href: "/theoria", icon: Building2 },
+  { label: "Docs", href: "/docs", icon: BookOpen },
   { label: "Settings", href: "/settings", icon: Settings },
 ];
 
