@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { Settings, User, Building2, Shield, Bell, Palette, Database, CheckCircle2, Check } from "lucide-react";
+import Link from "next/link";
+import { Settings, User, Building2, Shield, Bell, Palette, Database, CheckCircle2, Check, Rocket, ChevronRight, Users, MapPin, DollarSign, FileText } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
 
 export default function SettingsPage() {
@@ -199,6 +200,62 @@ export default function SettingsPage() {
           ))}
         </div>
       </div>
+
+      {/* Practice Configuration card */}
+      <Link href="/settings/practice" className="block">
+        <div className="bg-white rounded-xl border border-[var(--medos-gray-200)] shadow-medos-sm overflow-hidden hover:border-[var(--medos-primary)] transition-all group cursor-pointer">
+          <div className="px-6 py-5 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-[var(--medos-primary-light)] group-hover:bg-[var(--medos-primary)] transition-all">
+                <Building2 className="w-5 h-5 text-[var(--medos-primary)] group-hover:text-white transition-all" />
+              </div>
+              <div>
+                <h2 className="text-base font-semibold text-[var(--medos-navy)]">
+                  Practice Configuration
+                </h2>
+                <p className="text-xs text-[var(--medos-gray-500)]">
+                  Manage providers, locations, fee schedules, and payer contracts
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-3">
+              <div className="hidden sm:flex items-center gap-2">
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 text-[10px] font-medium border border-emerald-200">
+                  <Users className="w-3 h-3" /> 5 providers
+                </span>
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 text-[10px] font-medium border border-blue-200">
+                  <MapPin className="w-3 h-3" /> 3 locations
+                </span>
+              </div>
+              <ChevronRight className="w-5 h-5 text-[var(--medos-gray-400)] group-hover:text-[var(--medos-primary)] transition-all" />
+            </div>
+          </div>
+        </div>
+      </Link>
+
+      {/* Onboarding wizard card */}
+      <Link href="/settings/onboarding" className="block">
+        <div className="bg-white rounded-xl border border-[var(--medos-gray-200)] shadow-medos-sm overflow-hidden hover:border-[var(--medos-primary)] transition-all group cursor-pointer">
+          <div className="px-6 py-5 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-[var(--medos-primary-light)] group-hover:bg-[var(--medos-primary)] transition-all">
+                <Rocket className="w-5 h-5 text-[var(--medos-primary)] group-hover:text-white transition-all" />
+              </div>
+              <div>
+                <h2 className="text-base font-semibold text-[var(--medos-navy)]">
+                  Practice Onboarding
+                </h2>
+                <p className="text-xs text-[var(--medos-gray-500)]">
+                  Set up a new practice with locations, providers, and payer configuration
+                </p>
+              </div>
+            </div>
+            <span className="text-sm font-medium text-[var(--medos-primary)]">
+              Start Setup &rarr;
+            </span>
+          </div>
+        </div>
+      </Link>
 
       {/* Save button */}
       <div className="flex justify-end">
