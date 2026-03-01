@@ -11,12 +11,14 @@ import {
   Calendar,
   FileText,
   DollarSign,
+  ShieldCheck,
   BarChart3,
   Settings,
   LogOut,
   Menu,
   X,
   ChevronLeft,
+  BookOpen,
 } from "lucide-react";
 
 const NAV_ITEMS = [
@@ -25,7 +27,9 @@ const NAV_ITEMS = [
   { label: "Appointments", href: "/appointments", icon: Calendar },
   { label: "AI Notes", href: "/ai-notes", icon: FileText },
   { label: "Claims", href: "/claims", icon: DollarSign },
+  { label: "Approvals", href: "/approvals", icon: ShieldCheck },
   { label: "Analytics", href: "/analytics", icon: BarChart3 },
+  { label: "Docs", href: "/docs", icon: BookOpen },
   { label: "Settings", href: "/settings", icon: Settings },
 ];
 
