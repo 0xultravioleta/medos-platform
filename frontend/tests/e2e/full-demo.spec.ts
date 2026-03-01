@@ -622,180 +622,9 @@ test('MedOS Full Product Demo', async ({ page }) => {
   }
 
   // ============================================================
-  // ACT 11: SETTINGS + SUB-PAGES (Sidebar #10)
+  // ACT 11: PROJECT TRACKER (Sidebar #10)
   // ============================================================
-  chapterMarker('ACT 11', 'Settings & Configuration');
-
-  await page.getByRole('link', { name: /Settings/i }).first().click();
-  await page.waitForURL('**/settings', { timeout: 10_000 });
-  await pauseForViewer(page, 1500, 'Settings — profile and preferences');
-
-  // Toggle Two-Factor Authentication (visible switch animation)
-  const twoFASwitch = page.getByRole('switch', { name: /Two-Factor/i }).first();
-  if (await twoFASwitch.isVisible().catch(() => false)) {
-    await twoFASwitch.click();
-    await pauseForViewer(page, 800, '2FA enabled');
-    await twoFASwitch.click();
-    await pauseForViewer(page, 800, '2FA toggled back');
-  } else {
-    // Fallback: find switch by nearby label text
-    const twoFALabel = page.getByText('Two-Factor Authentication').first();
-    if (await twoFALabel.isVisible().catch(() => false)) {
-      const switchEl = twoFALabel.locator('..').locator('..').locator('button[role="switch"]');
-      if (await switchEl.isVisible().catch(() => false)) {
-        await switchEl.click();
-        await pauseForViewer(page, 800, '2FA enabled');
-        await switchEl.click();
-        await pauseForViewer(page, 800, '2FA toggled back');
-      }
-    }
-  }
-
-  // Scroll to see more toggles
-  await scrollToElement(page, 'text=AI Auto-Coding');
-  await pauseForViewer(page, 1000, 'AI Auto-Coding toggle');
-
-  // Click Save Changes
-  const saveBtn = page.getByRole('button', { name: /Save Changes/i }).first();
-  if (await saveBtn.isVisible().catch(() => false)) {
-    await scrollToElement(page, 'text=Save Changes');
-    await saveBtn.click();
-    await pauseForViewer(page, 1500, 'Settings saved — confirmation banner');
-  }
-
-  // Scroll to Practice Configuration link and click
-  const practiceConfigLink = page.getByText('Practice Configuration').first();
-  if (await practiceConfigLink.isVisible().catch(() => false)) {
-    await scrollToElement(page, 'text=Practice Configuration');
-    await practiceConfigLink.click();
-    await page.waitForLoadState('networkidle');
-    await pauseForViewer(page, 1500, 'Practice Configuration — providers and locations');
-
-    // Click through tabs
-    const locationsTab = page.getByText('Locations').first();
-    if (await locationsTab.isVisible().catch(() => false)) {
-      await locationsTab.click();
-      await pauseForViewer(page, 1200, 'Locations tab — practice locations');
-    }
-
-    const feeTab = page.getByText('Fee Schedule').first();
-    if (await feeTab.isVisible().catch(() => false)) {
-      await feeTab.click();
-      await pauseForViewer(page, 1200, 'Fee Schedules — CPT codes and rates');
-    }
-
-    const payerTab = page.getByText('Payer').first();
-    if (await payerTab.isVisible().catch(() => false)) {
-      await payerTab.click();
-      await pauseForViewer(page, 1200, 'Payer Contracts — insurance agreements');
-    }
-
-    // Back to providers tab
-    const providersTab = page.getByText('Providers').first();
-    if (await providersTab.isVisible().catch(() => false)) {
-      await providersTab.click();
-      await pauseForViewer(page, 800, 'Providers tab');
-    }
-  }
-
-  // Navigate to Onboarding Wizard
-  await page.goto('/settings/onboarding');
-  await page.waitForLoadState('networkidle');
-  await pauseForViewer(page, 2000, 'Onboarding Wizard — multi-step practice setup');
-
-  // Look for wizard steps / next button
-  const nextStepBtn = page.getByRole('button', { name: /Next|Continue/i }).first();
-  if (await nextStepBtn.isVisible().catch(() => false)) {
-    await nextStepBtn.click();
-    await pauseForViewer(page, 1500, 'Wizard step 2');
-
-    // Try advancing one more step
-    const nextBtn2 = page.getByRole('button', { name: /Next|Continue/i }).first();
-    if (await nextBtn2.isVisible().catch(() => false)) {
-      await nextBtn2.click();
-      await pauseForViewer(page, 1500, 'Wizard step 3');
-    }
-  }
-
-  // Scroll to show wizard content
-  await page.evaluate(() => window.scrollTo({ top: 300, behavior: 'smooth' }));
-  await pauseForViewer(page, 1500, 'Onboarding steps overview');
-
-  // --- /settings/devices — Device Management ---
-  await page.goto('/settings/devices');
-  await page.waitForLoadState('networkidle');
-  await pauseForViewer(page, 2000, 'Device Management — registered wearables');
-
-  // Click Readings tab
-  const readingsTab = page.getByRole('button', { name: /Readings/i });
-  if (await readingsTab.isVisible().catch(() => false)) {
-    await readingsTab.click();
-    await pauseForViewer(page, 1500, 'Device readings with LOINC codes and threshold colors');
-  }
-
-  // Click Alerts tab
-  const alertsTab = page.getByRole('button', { name: /Alerts/i });
-  if (await alertsTab.isVisible().catch(() => false)) {
-    await alertsTab.click();
-    await pauseForViewer(page, 1500, 'Threshold breach alerts — critical and warning');
-  }
-
-  // --- /settings/context — Context Freshness Monitor ---
-  await page.goto('/settings/context');
-  await page.waitForLoadState('networkidle');
-  await pauseForViewer(page, 2000, 'Context Freshness — patient data staleness monitoring');
-
-  // Click System Contexts tab
-  const systemCtxTab = page.getByRole('button', { name: /System Contexts/i });
-  if (await systemCtxTab.isVisible().catch(() => false)) {
-    await systemCtxTab.click();
-    await pauseForViewer(page, 1500, 'System-wide context freshness cards');
-  }
-
-  // Click Dependency Graph tab
-  const depGraphTab = page.getByRole('button', { name: /Dependency Graph/i });
-  if (await depGraphTab.isVisible().catch(() => false)) {
-    await depGraphTab.click();
-    await pauseForViewer(page, 1500, 'Change type to context dependency mapping');
-  }
-
-  // Click Rehydration Log tab
-  const rehydrationTab = page.getByRole('button', { name: /Rehydration Log/i });
-  if (await rehydrationTab.isVisible().catch(() => false)) {
-    await rehydrationTab.click();
-    await pauseForViewer(page, 1500, 'Recent rehydration events timeline');
-  }
-
-  // --- /settings/system — System Health ---
-  await page.goto('/settings/system');
-  await page.waitForLoadState('networkidle');
-  await pauseForViewer(page, 2000, 'System Health — platform overview (44 MCP tools, 3 agents)');
-
-  // Click MCP Inventory tab
-  const mcpTab = page.getByRole('button', { name: /MCP Inventory/i });
-  if (await mcpTab.isVisible().catch(() => false)) {
-    await mcpTab.click();
-    await pauseForViewer(page, 1500, 'MCP tool inventory across 6 servers');
-  }
-
-  // Click Agent Performance tab
-  const agentTab = page.getByRole('button', { name: /Agent Performance/i });
-  if (await agentTab.isVisible().catch(() => false)) {
-    await agentTab.click();
-    await pauseForViewer(page, 1500, 'AI agent performance metrics and confidence distribution');
-  }
-
-  // Click Cache & Events tab
-  const cacheTab = page.getByRole('button', { name: /Cache/i });
-  if (await cacheTab.isVisible().catch(() => false)) {
-    await cacheTab.click();
-    await pauseForViewer(page, 1500, 'Cache statistics and event bus monitoring');
-  }
-
-  // ============================================================
-  // ACT 12: PROJECT TRACKER (Sidebar #11)
-  // ============================================================
-  chapterMarker('ACT 12', 'Project Tracker');
+  chapterMarker('ACT 11', 'Project Tracker');
 
   await page.getByRole('link', { name: /Project/i }).first().click();
   await page.waitForURL('**/project', { timeout: 10_000 });
@@ -837,9 +666,9 @@ test('MedOS Full Product Demo', async ({ page }) => {
   }
 
   // ============================================================
-  // ACT 13: ADMIN HUB (Sidebar #12)
+  // ACT 12: ADMIN HUB (Sidebar #11)
   // ============================================================
-  chapterMarker('ACT 13', 'Admin Hub — Command Center');
+  chapterMarker('ACT 12', 'Admin Hub — Command Center');
 
   await page.getByRole('link', { name: /Admin/i }).first().click();
   await page.waitForURL('**/admin/dashboard', { timeout: 10_000 });
@@ -1018,9 +847,9 @@ test('MedOS Full Product Demo', async ({ page }) => {
   await pauseForViewer(page, 2000, 'Project Tracker in Admin — Kanban board');
 
   // ============================================================
-  // ACT 14: THEORIA MEDICAL PILOT (Sidebar #13)
+  // ACT 13: THEORIA MEDICAL PILOT (Sidebar #12)
   // ============================================================
-  chapterMarker('ACT 14', 'Theoria Medical — Post-Acute AI Platform');
+  chapterMarker('ACT 13', 'Theoria Medical — Post-Acute AI Platform');
 
   // --- Clinical Operations ---
   await page.goto('/theoria/facility');
@@ -1111,16 +940,183 @@ test('MedOS Full Product Demo', async ({ page }) => {
   await pauseForViewer(page, 2000, 'Credentialing Center — 21-state licensing');
 
   // ============================================================
-  // ACT 15: GRAND FINALE — BACK TO DASHBOARD
+  // ACT 14: SETTINGS + SUB-PAGES (Sidebar #13)
+  // ============================================================
+  chapterMarker('ACT 14', 'Settings & Configuration');
+
+  await page.getByRole('link', { name: /Settings/i }).first().click();
+  await page.waitForURL('**/settings', { timeout: 10_000 });
+  await pauseForViewer(page, 1500, 'Settings — profile and preferences');
+
+  // Toggle Two-Factor Authentication (visible switch animation)
+  const twoFASwitch = page.getByRole('switch', { name: /Two-Factor/i }).first();
+  if (await twoFASwitch.isVisible().catch(() => false)) {
+    await twoFASwitch.click();
+    await pauseForViewer(page, 800, '2FA enabled');
+    await twoFASwitch.click();
+    await pauseForViewer(page, 800, '2FA toggled back');
+  } else {
+    // Fallback: find switch by nearby label text
+    const twoFALabel = page.getByText('Two-Factor Authentication').first();
+    if (await twoFALabel.isVisible().catch(() => false)) {
+      const switchEl = twoFALabel.locator('..').locator('..').locator('button[role="switch"]');
+      if (await switchEl.isVisible().catch(() => false)) {
+        await switchEl.click();
+        await pauseForViewer(page, 800, '2FA enabled');
+        await switchEl.click();
+        await pauseForViewer(page, 800, '2FA toggled back');
+      }
+    }
+  }
+
+  // Scroll to see more toggles
+  await scrollToElement(page, 'text=AI Auto-Coding');
+  await pauseForViewer(page, 1000, 'AI Auto-Coding toggle');
+
+  // Click Save Changes
+  const saveBtn = page.getByRole('button', { name: /Save Changes/i }).first();
+  if (await saveBtn.isVisible().catch(() => false)) {
+    await scrollToElement(page, 'text=Save Changes');
+    await saveBtn.click();
+    await pauseForViewer(page, 1500, 'Settings saved — confirmation banner');
+  }
+
+  // Scroll to Practice Configuration link and click
+  const practiceConfigLink = page.getByText('Practice Configuration').first();
+  if (await practiceConfigLink.isVisible().catch(() => false)) {
+    await scrollToElement(page, 'text=Practice Configuration');
+    await practiceConfigLink.click();
+    await page.waitForLoadState('networkidle');
+    await pauseForViewer(page, 1500, 'Practice Configuration — providers and locations');
+
+    // Click through tabs
+    const locationsTab = page.getByText('Locations').first();
+    if (await locationsTab.isVisible().catch(() => false)) {
+      await locationsTab.click();
+      await pauseForViewer(page, 1200, 'Locations tab — practice locations');
+    }
+
+    const feeTab = page.getByText('Fee Schedule').first();
+    if (await feeTab.isVisible().catch(() => false)) {
+      await feeTab.click();
+      await pauseForViewer(page, 1200, 'Fee Schedules — CPT codes and rates');
+    }
+
+    const payerTab = page.getByText('Payer').first();
+    if (await payerTab.isVisible().catch(() => false)) {
+      await payerTab.click();
+      await pauseForViewer(page, 1200, 'Payer Contracts — insurance agreements');
+    }
+
+    // Back to providers tab
+    const providersTab = page.getByText('Providers').first();
+    if (await providersTab.isVisible().catch(() => false)) {
+      await providersTab.click();
+      await pauseForViewer(page, 800, 'Providers tab');
+    }
+  }
+
+  // Navigate to Onboarding Wizard
+  await page.goto('/settings/onboarding');
+  await page.waitForLoadState('networkidle');
+  await pauseForViewer(page, 2000, 'Onboarding Wizard — multi-step practice setup');
+
+  // Look for wizard steps / next button
+  const nextStepBtn = page.getByRole('button', { name: /Next|Continue/i }).first();
+  if (await nextStepBtn.isVisible().catch(() => false)) {
+    await nextStepBtn.click();
+    await pauseForViewer(page, 1500, 'Wizard step 2');
+
+    // Try advancing one more step
+    const nextBtn2 = page.getByRole('button', { name: /Next|Continue/i }).first();
+    if (await nextBtn2.isVisible().catch(() => false)) {
+      await nextBtn2.click();
+      await pauseForViewer(page, 1500, 'Wizard step 3');
+    }
+  }
+
+  // Scroll to show wizard content
+  await page.evaluate(() => window.scrollTo({ top: 300, behavior: 'smooth' }));
+  await pauseForViewer(page, 1500, 'Onboarding steps overview');
+
+  // --- /settings/devices — Device Management ---
+  await page.goto('/settings/devices');
+  await page.waitForLoadState('networkidle');
+  await pauseForViewer(page, 2000, 'Device Management — registered wearables');
+
+  // Click Readings tab
+  const readingsTab = page.getByRole('button', { name: /Readings/i });
+  if (await readingsTab.isVisible().catch(() => false)) {
+    await readingsTab.click();
+    await pauseForViewer(page, 1500, 'Device readings with LOINC codes and threshold colors');
+  }
+
+  // Click Alerts tab
+  const alertsTab = page.getByRole('button', { name: /Alerts/i });
+  if (await alertsTab.isVisible().catch(() => false)) {
+    await alertsTab.click();
+    await pauseForViewer(page, 1500, 'Threshold breach alerts — critical and warning');
+  }
+
+  // --- /settings/context — Context Freshness Monitor ---
+  await page.goto('/settings/context');
+  await page.waitForLoadState('networkidle');
+  await pauseForViewer(page, 2000, 'Context Freshness — patient data staleness monitoring');
+
+  // Click System Contexts tab
+  const systemCtxTab = page.getByRole('button', { name: /System Contexts/i });
+  if (await systemCtxTab.isVisible().catch(() => false)) {
+    await systemCtxTab.click();
+    await pauseForViewer(page, 1500, 'System-wide context freshness cards');
+  }
+
+  // Click Dependency Graph tab
+  const depGraphTab = page.getByRole('button', { name: /Dependency Graph/i });
+  if (await depGraphTab.isVisible().catch(() => false)) {
+    await depGraphTab.click();
+    await pauseForViewer(page, 1500, 'Change type to context dependency mapping');
+  }
+
+  // Click Rehydration Log tab
+  const rehydrationTab = page.getByRole('button', { name: /Rehydration Log/i });
+  if (await rehydrationTab.isVisible().catch(() => false)) {
+    await rehydrationTab.click();
+    await pauseForViewer(page, 1500, 'Recent rehydration events timeline');
+  }
+
+  // --- /settings/system — System Health ---
+  await page.goto('/settings/system');
+  await page.waitForLoadState('networkidle');
+  await pauseForViewer(page, 2000, 'System Health — platform overview (44 MCP tools, 3 agents)');
+
+  // Click MCP Inventory tab
+  const mcpTab = page.getByRole('button', { name: /MCP Inventory/i });
+  if (await mcpTab.isVisible().catch(() => false)) {
+    await mcpTab.click();
+    await pauseForViewer(page, 1500, 'MCP tool inventory across 6 servers');
+  }
+
+  // Click Agent Performance tab
+  const agentTab = page.getByRole('button', { name: /Agent Performance/i });
+  if (await agentTab.isVisible().catch(() => false)) {
+    await agentTab.click();
+    await pauseForViewer(page, 1500, 'AI agent performance metrics and confidence distribution');
+  }
+
+  // Click Cache & Events tab
+  const cacheTab = page.getByRole('button', { name: /Cache/i });
+  if (await cacheTab.isVisible().catch(() => false)) {
+    await cacheTab.click();
+    await pauseForViewer(page, 1500, 'Cache statistics and event bus monitoring');
+  }
+
+
+  // ============================================================
+  // ACT 15: GRAND FINALE
   // ============================================================
   chapterMarker('ACT 15', 'Grand Finale');
 
-  // Back to Dashboard — full circle
-  await page.getByRole('link', { name: /Dashboard/i }).first().click();
-  await page.waitForURL('**/dashboard', { timeout: 10_000 });
-  await pauseForViewer(page, 2000, 'Back to Dashboard — full circle');
-
-  // Sign out
+  // Sign out directly from last page
   const desktopSidebar = page.locator('aside').last();
   const signOutBtn = desktopSidebar.getByText('Sign out');
   await signOutBtn.scrollIntoViewIfNeeded();
