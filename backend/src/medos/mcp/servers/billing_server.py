@@ -1,18 +1,19 @@
-"""Billing/Claims MCP Server - 12 tools for revenue cycle management.
+"""Billing/Claims MCP Server - 13 tools for revenue cycle management.
 
 Tools:
-    billing_check_eligibility  - Verify patient insurance eligibility
-    billing_submit_claim       - Submit a claim (requires approval)
-    billing_claim_status       - Check claim processing status
-    billing_parse_remittance   - Parse X12 835 remittance advice
-    billing_denial_lookup      - Look up CARC/RARC denial codes
-    billing_submit_appeal      - Submit a claim appeal (requires approval)
-    billing_patient_balance    - Get patient balance and payment history
-    billing_payer_rules        - Get payer-specific billing rules
-    billing_generate_claim     - Generate X12 837P from claim data (requires approval)
-    billing_scrub_claim        - Run pre-submission scrubbing rules
-    billing_post_payment       - Post X12 835 payment against a claim (requires approval)
-    billing_claims_analytics   - Claims pipeline analytics and KPIs
+    billing_check_eligibility    - Verify patient insurance eligibility
+    billing_submit_claim         - Submit a claim (requires approval)
+    billing_claim_status         - Check claim processing status
+    billing_parse_remittance     - Parse X12 835 remittance advice
+    billing_denial_lookup        - Look up CARC/RARC denial codes
+    billing_submit_appeal        - Submit a claim appeal (requires approval)
+    billing_patient_balance      - Get patient balance and payment history
+    billing_payer_rules          - Get payer-specific billing rules
+    billing_generate_claim       - Generate X12 837P from claim data (requires approval)
+    billing_scrub_claim          - Run pre-submission scrubbing rules
+    billing_post_payment         - Post X12 835 payment against a claim (requires approval)
+    billing_claims_analytics     - Claims pipeline analytics and KPIs
+    billing_detect_underpayments - Scan claims for underpayments against contracted rates
 """
 
 from __future__ import annotations
@@ -789,4 +790,56 @@ async def billing_claims_analytics() -> dict[str, Any]:
             "first_pass_resolution_rate": 80.0,
             "claims_per_provider_per_day": 12.3,
         },
+    }
+
+
+@hipaa_tool(phi_level="limited", allowed_agents=_BILLING_AGENTS, server="billing")
+async def billing_detect_underpayments() -> dict[str, Any]:
+    """Scan all claims for potential underpayments against contracted rates."""
+    from medos.billing.underpayment_detector import (
+        detect_underpayment,
+        get_underpayment_summary,
+    )
+
+    findings = []
+    for claim in _MOCK_CLAIMS.values():
+        if claim.get("status") != "paid":
+            continue
+
+        paid = claim.get("paid_amount")
+        if paid is None or paid <= 0:
+            continue
+
+        payer = claim.get("payer", "")
+        cpt_codes = claim.get("cpt_codes", [])
+
+        if len(cpt_codes) == 1:
+            finding = detect_underpayment(claim["claim_id"], payer, cpt_codes[0], paid)
+            if finding:
+                findings.append(finding)
+        else:
+            per_line = paid / len(cpt_codes) if cpt_codes else 0
+            for code in cpt_codes:
+                finding = detect_underpayment(claim["claim_id"], payer, code, per_line)
+                if finding:
+                    findings.append(finding)
+
+    summary = get_underpayment_summary(findings)
+
+    return {
+        "findings": [
+            {
+                "claim_id": f.claim_id,
+                "cpt_code": f.cpt_code,
+                "expected_amount": f.expected_amount,
+                "actual_paid": f.actual_paid,
+                "variance": f.variance,
+                "variance_pct": f.variance_pct,
+                "payer": f.payer,
+                "severity": f.severity,
+            }
+            for f in findings
+        ],
+        "summary": summary,
+        "scanned_at": datetime.now(UTC).isoformat(),
     }
