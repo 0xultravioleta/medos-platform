@@ -20,7 +20,8 @@ import {
   Zap,
   AlertCircle,
 } from "lucide-react";
-import { getClaims, type Claim } from "@/lib/api";
+import { getClaims, getApprovals, type Claim, type ApprovalTask } from "@/lib/api";
+import Link from "next/link";
 
 const MOCK_CLAIMS: Claim[] = [
   {
@@ -209,10 +210,13 @@ function ClaimActions({ status }: { status: string }) {
     case "denied":
       return (
         <div className="flex items-center gap-2">
-          <button className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[var(--medos-primary)] text-white text-xs font-semibold hover:bg-[var(--medos-primary-hover)] transition-default">
+          <Link
+            href="/approvals"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[var(--medos-primary)] text-white text-xs font-semibold hover:bg-[var(--medos-primary-hover)] transition-default"
+          >
             <RotateCcw className="w-3.5 h-3.5" />
             Appeal
-          </button>
+          </Link>
           <button className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[var(--medos-gray-300)] text-xs font-medium text-[var(--medos-gray-700)] hover:bg-[var(--medos-gray-50)] transition-default">
             <Eye className="w-3.5 h-3.5" />
             View Denial Reason
@@ -300,10 +304,15 @@ export default function ClaimsPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [expandedClaim, setExpandedClaim] = useState<string | null>(null);
   const [denialPanelOpen, setDenialPanelOpen] = useState(false);
+  const [agentTasks, setAgentTasks] = useState<ApprovalTask[]>([]);
 
   useEffect(() => {
-    getClaims().then((apiData) => {
+    Promise.all([
+      getClaims(),
+      getApprovals("billing"),
+    ]).then(([apiData, approvalData]) => {
       if (apiData) setClaims(apiData);
+      if (approvalData) setAgentTasks(approvalData.approvals);
       setLoading(false);
     });
   }, []);
@@ -512,6 +521,60 @@ export default function ClaimsPage() {
           </div>
         </div>
       </div>
+
+      {/* Agent-Processed Claims */}
+      {agentTasks.length > 0 && (
+        <div className="rounded-xl border border-violet-200 bg-gradient-to-r from-violet-50 via-white to-violet-50/60 p-4">
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-2">
+              <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-violet-100">
+                <Sparkles className="w-3.5 h-3.5 text-violet-600" />
+              </div>
+              <p className="text-sm font-semibold text-[var(--medos-navy)]">
+                AI Agent Activity
+              </p>
+              <span className="px-2 py-0.5 rounded-full bg-violet-100 text-violet-700 text-[10px] font-bold">
+                {agentTasks.length} pending
+              </span>
+            </div>
+            <Link
+              href="/approvals"
+              className="text-xs font-medium text-violet-700 hover:text-violet-800 hover:underline"
+            >
+              View all in Approval Queue →
+            </Link>
+          </div>
+          <div className="space-y-2">
+            {agentTasks.slice(0, 3).map((task) => (
+              <div
+                key={task.task_id}
+                className="flex items-center justify-between rounded-lg bg-white/80 border border-violet-100 px-3 py-2"
+              >
+                <div className="flex items-center gap-2 min-w-0">
+                  <span className="flex-shrink-0 w-2 h-2 rounded-full bg-violet-400 animate-pulse" />
+                  <p className="text-sm text-[var(--medos-gray-700)] truncate">
+                    {task.title}
+                  </p>
+                </div>
+                <div className="flex items-center gap-2 flex-shrink-0">
+                  {task.confidence != null && (
+                    <span
+                      className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold border ${getConfidenceColor(
+                        task.confidence * 100
+                      )}`}
+                    >
+                      {(task.confidence * 100).toFixed(0)}%
+                    </span>
+                  )}
+                  <span className="px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 text-[10px] font-medium border border-amber-200">
+                    {task.resource_type}
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Search */}
       <div className="relative">
