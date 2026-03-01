@@ -21,6 +21,7 @@ import {
   BookOpen,
   Target,
   LayoutGrid,
+  Shield,
 } from "lucide-react";
 
 const NAV_ITEMS = [
@@ -34,6 +35,7 @@ const NAV_ITEMS = [
   { label: "Pilot", href: "/pilot", icon: Target },
   { label: "Docs", href: "/docs", icon: BookOpen },
   { label: "Project", href: "/project", icon: LayoutGrid },
+  { label: "Admin", href: "/admin", icon: Shield },
   { label: "Settings", href: "/settings", icon: Settings },
 ];
 
