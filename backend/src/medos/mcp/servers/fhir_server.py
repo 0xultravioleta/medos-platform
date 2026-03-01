@@ -1,4 +1,4 @@
-"""FHIR MCP Server - 12 tools for FHIR R4 resource access.
+"""FHIR MCP Server - 15 tools for FHIR R4 resource access.
 
 Wraps the existing FHIRService/FHIRRepository to expose FHIR
 operations as MCP tools for AI agents.
@@ -16,6 +16,9 @@ Tools:
     fhir_audit_log     - Query audit events
     fhir_provenance_create  - Create provenance for AI output
     fhir_batch         - Execute multiple operations in a batch
+    fhir_create_claim_response - Create a ClaimResponse resource
+    fhir_create_eob    - Create an ExplanationOfBenefit resource
+    fhir_search_eob    - Search ExplanationOfBenefit resources
 """
 
 from __future__ import annotations
@@ -37,6 +40,30 @@ _fhir_store: dict[str, dict[str, dict]] = {}  # {resource_type: {id: resource}}
 # Agent types that can access FHIR tools
 _FHIR_AGENTS = [AgentType.CLINICAL_SCRIBE, AgentType.SYSTEM, AgentType.PRIOR_AUTH, AgentType.DENIAL_MANAGEMENT]
 _CLINICAL_AGENTS = [AgentType.CLINICAL_SCRIBE, AgentType.SYSTEM]
+_BILLING_AGENTS = [AgentType.BILLING, AgentType.SYSTEM]
+_BILLING_READ_AGENTS = [AgentType.BILLING, AgentType.CLINICAL_SCRIBE, AgentType.SYSTEM]
+
+# Reusable FHIR coding for claim type (professional)
+_CLAIM_TYPE_PROFESSIONAL = {
+    "coding": [{
+        "system": "http://terminology.hl7.org/CodeSystem/claim-type",
+        "code": "professional",
+        "display": "Professional",
+    }],
+}
+
+
+def _usd(value: float) -> dict:
+    """Return a FHIR Money dict for a USD amount."""
+    return {"value": value, "currency": "USD"}
+
+
+def _total_entry(code: str, display: str, value: float) -> dict:
+    """Return a single FHIR total entry for EOB."""
+    return {
+        "category": {"coding": [{"code": code, "display": display}]},
+        "amount": _usd(value),
+    }
 
 
 def _get_store(resource_type: str) -> dict[str, dict]:
@@ -264,6 +291,97 @@ def _seed_demo_patients() -> None:
         "participant": [{"individual": {"reference": "Practitioner/prov-001", "display": "Dr. Sarah Williams"}}],
         "period": {"start": "2025-02-20T10:00:00Z", "end": "2025-02-20T10:30:00Z"},
         "reasonCode": [{"text": "Asthma follow-up, peak flow review"}],
+    }
+
+    # Seed ClaimResponses
+    now = datetime.now(UTC).isoformat()
+    claim_responses = _get_store("ClaimResponse")
+    claim_responses["cr-001"] = {
+        "id": "cr-001",
+        "resourceType": "ClaimResponse",
+        "meta": {"versionId": "1", "lastUpdated": now},
+        "status": "active",
+        "type": _CLAIM_TYPE_PROFESSIONAL,
+        "use": "claim",
+        "patient": {"reference": "Patient/p-007"},
+        "created": now,
+        "insurer": {"display": "Aetna"},
+        "request": {"reference": "Claim/clm-007-1"},
+        "outcome": "complete",
+        "disposition": "Claim processed successfully",
+        "payment": {"amount": _usd(175.00)},
+    }
+    claim_responses["cr-002"] = {
+        "id": "cr-002",
+        "resourceType": "ClaimResponse",
+        "meta": {"versionId": "1", "lastUpdated": now},
+        "status": "active",
+        "type": _CLAIM_TYPE_PROFESSIONAL,
+        "use": "claim",
+        "patient": {"reference": "Patient/p-008"},
+        "created": now,
+        "insurer": {"display": "Blue Cross Blue Shield"},
+        "request": {"reference": "Claim/clm-008-1"},
+        "outcome": "partial",
+        "disposition": "Partial payment - out of network provider",
+        "payment": {"amount": _usd(90.00)},
+    }
+
+    # Seed ExplanationOfBenefits
+    eobs = _get_store("ExplanationOfBenefit")
+    eobs["eob-001"] = {
+        "id": "eob-001",
+        "resourceType": "ExplanationOfBenefit",
+        "meta": {"versionId": "1", "lastUpdated": now},
+        "status": "active",
+        "type": _CLAIM_TYPE_PROFESSIONAL,
+        "use": "claim",
+        "patient": {"reference": "Patient/p-007"},
+        "created": now,
+        "insurer": {"display": "Aetna"},
+        "claim": {"reference": "Claim/clm-007-1"},
+        "outcome": "complete",
+        "total": [
+            _total_entry("submitted", "Submitted Amount", 250.00),
+            _total_entry("benefit", "Benefit Amount", 175.00),
+            _total_entry("copay", "Patient Co-Payment", 75.00),
+        ],
+    }
+    eobs["eob-002"] = {
+        "id": "eob-002",
+        "resourceType": "ExplanationOfBenefit",
+        "meta": {"versionId": "1", "lastUpdated": now},
+        "status": "active",
+        "type": _CLAIM_TYPE_PROFESSIONAL,
+        "use": "claim",
+        "patient": {"reference": "Patient/p-008"},
+        "created": now,
+        "insurer": {"display": "Blue Cross Blue Shield"},
+        "claim": {"reference": "Claim/clm-008-1"},
+        "outcome": "partial",
+        "total": [
+            _total_entry("submitted", "Submitted Amount", 150.00),
+            _total_entry("benefit", "Benefit Amount", 90.00),
+            _total_entry("copay", "Patient Co-Payment", 60.00),
+        ],
+    }
+    eobs["eob-003"] = {
+        "id": "eob-003",
+        "resourceType": "ExplanationOfBenefit",
+        "meta": {"versionId": "1", "lastUpdated": now},
+        "status": "active",
+        "type": _CLAIM_TYPE_PROFESSIONAL,
+        "use": "claim",
+        "patient": {"reference": "Patient/p-007"},
+        "created": now,
+        "insurer": {"display": "Aetna"},
+        "claim": {"reference": "Claim/clm-007-2"},
+        "outcome": "complete",
+        "total": [
+            _total_entry("submitted", "Submitted Amount", 180.00),
+            _total_entry("benefit", "Benefit Amount", 145.00),
+            _total_entry("copay", "Patient Co-Payment", 35.00),
+        ],
     }
 
 
@@ -584,6 +702,158 @@ async def fhir_batch(operations: list[dict[str, Any]] | None = None) -> dict[str
         "resourceType": "Bundle",
         "type": "batch-response",
         "entry": results,
+    }
+
+
+@hipaa_tool(phi_level="limited", allowed_agents=_BILLING_AGENTS, server="fhir")
+async def fhir_create_claim_response(
+    claim_id: str = "",
+    outcome: str = "complete",
+    disposition: str = "",
+    payer: str = "",
+    total_paid: float = 0.0,
+    adjudication_details: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    """Create a FHIR ClaimResponse resource tracking payer decision on a claim."""
+    if not claim_id:
+        return {"error": "claim_id is required"}
+
+    resource_id = str(uuid4())
+    now = datetime.now(UTC).isoformat()
+
+    patient_ref = (
+        f"Patient/{claim_id.split('-')[0]}"
+        if "-" in claim_id
+        else "Patient/unknown"
+    )
+    resource: dict[str, Any] = {
+        "id": resource_id,
+        "resourceType": "ClaimResponse",
+        "meta": {"versionId": "1", "lastUpdated": now},
+        "status": "active",
+        "type": _CLAIM_TYPE_PROFESSIONAL,
+        "use": "claim",
+        "patient": {"reference": patient_ref},
+        "created": now,
+        "insurer": {"display": payer or "Unknown Payer"},
+        "request": {"reference": f"Claim/{claim_id}"},
+        "outcome": outcome,
+        "disposition": disposition,
+        "payment": {"amount": _usd(total_paid)},
+    }
+
+    if adjudication_details:
+        resource["adjudication"] = [
+            {
+                "category": {"coding": [{"code": k, "display": k}]},
+                "amount": _usd(v) if isinstance(v, int | float) else {"value": 0},
+            }
+            for k, v in adjudication_details.items()
+        ]
+
+    store = _get_store("ClaimResponse")
+    store[resource_id] = resource
+
+    logger.info("Created ClaimResponse/%s for Claim/%s via MCP", resource_id, claim_id)
+    return resource
+
+
+@hipaa_tool(phi_level="limited", allowed_agents=_BILLING_AGENTS, server="fhir")
+async def fhir_create_eob(
+    claim_id: str = "",
+    patient_id: str = "",
+    payer: str = "",
+    outcome: str = "complete",
+    total_billed: float = 0.0,
+    total_paid: float = 0.0,
+    patient_responsibility: float = 0.0,
+    service_items: list[dict[str, Any]] | None = None,
+) -> dict[str, Any]:
+    """Create a FHIR ExplanationOfBenefit resource with payment breakdown."""
+    if not claim_id:
+        return {"error": "claim_id is required"}
+    if not patient_id:
+        return {"error": "patient_id is required"}
+
+    resource_id = str(uuid4())
+    now = datetime.now(UTC).isoformat()
+
+    items: list[dict[str, Any]] = []
+    if service_items:
+        for idx, svc in enumerate(service_items, start=1):
+            code = svc.get("code", "99213")
+            display = svc.get("display", "Service")
+            item: dict[str, Any] = {
+                "sequence": idx,
+                "productOrService": {
+                    "coding": [{"code": code, "display": display}],
+                },
+                "adjudication": [
+                    _total_entry("submitted", "Submitted Amount", svc.get("billed", 0.0)),
+                    _total_entry("benefit", "Benefit Amount", svc.get("paid", 0.0)),
+                ],
+            }
+            items.append(item)
+
+    resource: dict[str, Any] = {
+        "id": resource_id,
+        "resourceType": "ExplanationOfBenefit",
+        "meta": {"versionId": "1", "lastUpdated": now},
+        "status": "active",
+        "type": _CLAIM_TYPE_PROFESSIONAL,
+        "use": "claim",
+        "patient": {"reference": f"Patient/{patient_id}"},
+        "created": now,
+        "insurer": {"display": payer or "Unknown Payer"},
+        "claim": {"reference": f"Claim/{claim_id}"},
+        "outcome": outcome,
+        "total": [
+            _total_entry("submitted", "Submitted Amount", total_billed),
+            _total_entry("benefit", "Benefit Amount", total_paid),
+            _total_entry("copay", "Patient Co-Payment", patient_responsibility),
+        ],
+    }
+
+    if items:
+        resource["item"] = items
+
+    store = _get_store("ExplanationOfBenefit")
+    store[resource_id] = resource
+
+    logger.info("Created ExplanationOfBenefit/%s for Claim/%s via MCP", resource_id, claim_id)
+    return resource
+
+
+@hipaa_tool(phi_level="limited", allowed_agents=_BILLING_READ_AGENTS, server="fhir")
+async def fhir_search_eob(
+    patient_id: str | None = None,
+    status: str | None = None,
+    outcome: str | None = None,
+) -> dict[str, Any]:
+    """Search ExplanationOfBenefit resources by patient, status, or outcome."""
+    store = _get_store("ExplanationOfBenefit")
+    results = list(store.values())
+
+    if patient_id:
+        results = [
+            r for r in results
+            if r.get("patient", {}).get("reference") == f"Patient/{patient_id}"
+        ]
+
+    if status:
+        results = [r for r in results if r.get("status") == status]
+
+    if outcome:
+        results = [r for r in results if r.get("outcome") == outcome]
+
+    return {
+        "resourceType": "Bundle",
+        "type": "searchset",
+        "total": len(results),
+        "entry": [
+            {"resource": r, "fullUrl": f"ExplanationOfBenefit/{r['id']}"}
+            for r in results
+        ],
     }
 
 
